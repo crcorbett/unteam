@@ -1,13 +1,31 @@
 {
   "receiptVersion": "verification.v1",
   "updated": "2026-08-10",
-  "status": "in_progress",
+  "status": "passed",
   "branch": "codex/bootstrap-unteam",
-  "commit": null,
-  "commands": [],
-  "artifacts": [],
-  "remote": null,
+  "commit": "02646504483307d8a896de580bf3e97c09c3dc6e",
+  "commands": [
+    "bun install --frozen-lockfile",
+    "bun run verification",
+    "bun run test:packed",
+    "bun pm pack packages/emulator-core and packages/emulator-bun",
+    "Pollsor: bun --filter @pollsor/teams-test-harness test:packed -- <core-tarball> <bun-tarball>"
+  ],
+  "artifacts": [
+    {
+      "path": "artifacts/unteam-emulator-core-0.1.0.tgz",
+      "sha256": "4cc568a9f2f4677bfe7cda887c693ee8245794360c63c30b6ff3678727f1ea15"
+    },
+    {
+      "path": "artifacts/unteam-emulator-bun-0.1.0.tgz",
+      "sha256": "1fa60d8dacbec090c1850ee5dba345bd0e11a725b09192377dfb6d6bda1d9b05"
+    }
+  ],
+  "remote": "pending-authorized-GitHub-create-and-readback",
   "notes": [
-    "This receipt is mutable proof owned by the closeout slice; it is not a claim of completion until commands and readbacks are populated."
+    "Local repository verification, real Bun server tests, export validation, governance validation, and packed-artifact proof passed.",
+    "Pollsor's clean packed consumer passed on codex/use-unteam-emulator at 897679f; it preserves Pollsor's TeamsChannel and whole-system claim ceiling.",
+    "OpenID document availability and direct JWK retrieval are proven; discovery resolution is not claimed.",
+    "No npm publication, release, Microsoft request, credential, tenant, deployment, or provider mutation occurred."
   ]
 }

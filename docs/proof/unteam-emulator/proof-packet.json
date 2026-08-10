@@ -6,25 +6,25 @@
     {
       "id": "CLAIM-001",
       "claim": "strict Effect core and Bun host compile and test against the installed beta.100 ecosystem",
-      "status": "pending-closeout",
+      "status": "complete",
       "evidence": ["verification.receipt.json"]
     },
     {
       "id": "CLAIM-002",
       "claim": "real local OpenID/JWK/OAuth/Connector and signed delivery boundaries work",
-      "status": "pending-closeout",
+      "status": "complete",
       "evidence": ["packages/emulator-bun/test/server.test.ts"]
     },
     {
       "id": "CLAIM-003",
       "claim": "packed package exports are consumable through a clean consumer",
-      "status": "pending-closeout",
+      "status": "complete",
       "evidence": ["artifacts", "scripts/packed-artifact-proof.ts"]
     },
     {
       "id": "CLAIM-004",
       "claim": "Pollsor has a real packed-artifact consumption/conformance seam",
-      "status": "pending-closeout",
+      "status": "complete",
       "evidence": ["Pollsor codex/use-unteam-emulator branch"]
     }
   ],

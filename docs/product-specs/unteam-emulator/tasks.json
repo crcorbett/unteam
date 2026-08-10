@@ -26,16 +26,19 @@
     {
       "id": "UNTEAM-004",
       "title": "Run repository, export, documentation, and packed-artifact verification",
-      "status": "in_progress",
+      "status": "complete",
       "owner": "repository",
-      "evidence": ["docs/proof/unteam-emulator/verification.receipt.json"]
+      "evidence": ["docs/proof/unteam-emulator/verification.receipt.json", "scripts/packed-artifact-proof.ts"]
     },
     {
       "id": "UNTEAM-005",
       "title": "Consume packed unteam artifacts from Pollsor through a reviewed adapter seam",
-      "status": "pending",
+      "status": "complete",
       "owner": "Pollsor consumer",
-      "evidence": ["Pollsor codex/use-unteam-emulator branch"]
+      "evidence": [
+        "Pollsor codex/use-unteam-emulator at 897679f",
+        "Pollsor docs/proof/unteam-emulator-consumption/verification.receipt.json"
+      ]
     },
     {
       "id": "UNTEAM-006",
