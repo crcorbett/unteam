@@ -3,7 +3,7 @@
   "updated": "2026-08-10",
   "status": "passed",
   "branch": "codex/bootstrap-unteam",
-  "commit": "02646504483307d8a896de580bf3e97c09c3dc6e",
+  "commit": "43f8cfa4d84880fa16da280f2d95c8e1a8ece872",
   "commands": [
     "bun install --frozen-lockfile",
     "bun run verification",
@@ -21,11 +21,25 @@
       "sha256": "1fa60d8dacbec090c1850ee5dba345bd0e11a725b09192377dfb6d6bda1d9b05"
     }
   ],
-  "remote": "pending-authorized-GitHub-create-and-readback",
+  "remote": {
+    "owner": "crcorbett",
+    "name": "unteam",
+    "fullName": "crcorbett/unteam",
+    "visibility": "PUBLIC",
+    "defaultBranch": "main",
+    "url": "https://github.com/crcorbett/unteam",
+    "cloneUrl": "https://github.com/crcorbett/unteam.git",
+    "immutableHead": "43f8cfa4d84880fa16da280f2d95c8e1a8ece872",
+    "branches": {
+      "main": "43f8cfa4d84880fa16da280f2d95c8e1a8ece872",
+      "codex/bootstrap-unteam": "43f8cfa4d84880fa16da280f2d95c8e1a8ece872"
+    }
+  },
   "notes": [
     "Local repository verification, real Bun server tests, export validation, governance validation, and packed-artifact proof passed.",
     "Pollsor's clean packed consumer passed on codex/use-unteam-emulator at 897679f; it preserves Pollsor's TeamsChannel and whole-system claim ceiling.",
     "OpenID document availability and direct JWK retrieval are proven; discovery resolution is not claimed.",
-    "No npm publication, release, Microsoft request, credential, tenant, deployment, or provider mutation occurred."
+    "No npm publication, release, Microsoft request, credential, tenant, deployment, or provider mutation occurred.",
+    "GitHub repository creation and branch/default-branch readback were the only external mutations authorized for this closeout."
   ]
 }

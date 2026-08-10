@@ -43,9 +43,13 @@
     {
       "id": "UNTEAM-006",
       "title": "Create and read back public GitHub repository after local verification",
-      "status": "pending",
+      "status": "complete",
       "owner": "repository",
-      "evidence": ["public remote readback"]
+      "evidence": [
+        "crcorbett/unteam public repository",
+        "docs/proof/unteam-emulator/verification.receipt.json",
+        "git ls-remote --symref origin HEAD"
+      ]
     }
   ]
 }
