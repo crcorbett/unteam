@@ -1,0 +1,45 @@
+{
+  "packetVersion": "proof.v1",
+  "updated": "2026-08-10",
+  "repository": "unteam",
+  "claims": [
+    {
+      "id": "CLAIM-001",
+      "claim": "strict Effect core and Bun host compile and test against the installed beta.100 ecosystem",
+      "status": "pending-closeout",
+      "evidence": ["verification.receipt.json"]
+    },
+    {
+      "id": "CLAIM-002",
+      "claim": "real local OpenID/JWK/OAuth/Connector and signed delivery boundaries work",
+      "status": "pending-closeout",
+      "evidence": ["packages/emulator-bun/test/server.test.ts"]
+    },
+    {
+      "id": "CLAIM-003",
+      "claim": "packed package exports are consumable through a clean consumer",
+      "status": "pending-closeout",
+      "evidence": ["artifacts", "scripts/packed-artifact-proof.ts"]
+    },
+    {
+      "id": "CLAIM-004",
+      "claim": "Pollsor has a real packed-artifact consumption/conformance seam",
+      "status": "pending-closeout",
+      "evidence": ["Pollsor codex/use-unteam-emulator branch"]
+    }
+  ],
+  "nonClaims": [
+    "Microsoft or Teams compatibility",
+    "Entra identity or live tenant access",
+    "Graph, Teams UI/catalog, proactive provider behavior, or conversationUpdate installation",
+    "production durability, exactly-once delivery, or cloud deployment",
+    "discovery resolution beyond local document availability and direct JWK retrieval"
+  ],
+  "secretNegative": [
+    "no OAuth bearer values",
+    "no client secrets",
+    "no private JWK members",
+    "no local absolute paths",
+    "no Pollsor-only provider state"
+  ]
+}

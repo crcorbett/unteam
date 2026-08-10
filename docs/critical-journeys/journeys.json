@@ -1,0 +1,47 @@
+{
+  "updated": "2026-08-10",
+  "journeys": [
+    {
+      "id": "CJ-001",
+      "name": "two-listener synthetic Bot Connector turn",
+      "steps": [
+        "start the scoped emulator Bun listener",
+        "start a separate caller-owned loopback ingress listener",
+        "follow the local OpenID document to direct JWK retrieval",
+        "issue a synthetic OAuth client-credentials token",
+        "send a Connector activity-shaped request",
+        "deliver a signed Activity through the control boundary to the caller ingress",
+        "decode the Activity and receipt with Schema",
+        "reset and finalize both listeners"
+      ],
+      "oracle": {
+        "must": [
+          "tenant and conversation fields match the selected connection",
+          "all protocol envelopes carry their declared version",
+          "delivery uses one attempt and a bounded receipt",
+          "snapshot contains counts but no token, client secret, or private key",
+          "fresh Effect Platform TCP probes fail after finalization"
+        ],
+        "must_not": [
+          "use raw fetch or wall-clock polling",
+          "contact Microsoft or a public service URL",
+          "import Pollsor domain/workflow/outbox state",
+          "treat local success as Teams/Microsoft compatibility"
+        ]
+      }
+    },
+    {
+      "id": "FG-001",
+      "name": "false-green oracle",
+      "description": "A test is false-green if it proves only an in-process fake or an HTTP 200 while skipping the real loopback boundary.",
+      "checks": [
+        "the client is Effect Platform HttpClient",
+        "the server is Effect Platform BunHttpServer",
+        "the caller ingress is a second real loopback listener",
+        "the received body is decoded with ConnectorActivity",
+        "the listener-finalization probe runs after the outer Scope closes",
+        "the packed-artifact consumer imports the package tarballs rather than workspace source"
+      ]
+    }
+  ]
+}

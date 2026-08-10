@@ -1,0 +1,48 @@
+{
+  "spec": "unteam-emulator",
+  "updated": "2026-08-10",
+  "tasks": [
+    {
+      "id": "UNTEAM-001",
+      "title": "Create minimal public monorepo topology and governance",
+      "status": "complete",
+      "owner": "repository",
+      "evidence": ["AGENTS.md", "ARCHITECTURE.md", "docs/repository-harness.md"]
+    },
+    {
+      "id": "UNTEAM-002",
+      "title": "Implement strict core service, schemas, state, signing, and protocol application",
+      "status": "complete",
+      "owner": "packages/emulator-core",
+      "evidence": ["packages/emulator-core/src", "packages/emulator-core/test"]
+    },
+    {
+      "id": "UNTEAM-003",
+      "title": "Implement scoped Effect Platform Bun host and CLI runtime",
+      "status": "complete",
+      "owner": "packages/emulator-bun and apps/cli",
+      "evidence": ["packages/emulator-bun/src", "apps/cli/src"]
+    },
+    {
+      "id": "UNTEAM-004",
+      "title": "Run repository, export, documentation, and packed-artifact verification",
+      "status": "in_progress",
+      "owner": "repository",
+      "evidence": ["docs/proof/unteam-emulator/verification.receipt.json"]
+    },
+    {
+      "id": "UNTEAM-005",
+      "title": "Consume packed unteam artifacts from Pollsor through a reviewed adapter seam",
+      "status": "pending",
+      "owner": "Pollsor consumer",
+      "evidence": ["Pollsor codex/use-unteam-emulator branch"]
+    },
+    {
+      "id": "UNTEAM-006",
+      "title": "Create and read back public GitHub repository after local verification",
+      "status": "pending",
+      "owner": "repository",
+      "evidence": ["public remote readback"]
+    }
+  ]
+}

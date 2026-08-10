@@ -1,0 +1,13 @@
+{
+  "receiptVersion": "verification.v1",
+  "updated": "2026-08-10",
+  "status": "in_progress",
+  "branch": "codex/bootstrap-unteam",
+  "commit": null,
+  "commands": [],
+  "artifacts": [],
+  "remote": null,
+  "notes": [
+    "This receipt is mutable proof owned by the closeout slice; it is not a claim of completion until commands and readbacks are populated."
+  ]
+}
