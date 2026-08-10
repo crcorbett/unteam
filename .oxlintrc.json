@@ -1,0 +1,9 @@
+{
+  "$schema": "https://oxc.rs/schema/oxlint.json",
+  "rules": {
+    "no-explicit-any": "error",
+    "no-console": "error",
+    "no-non-null-assertion": "error",
+    "no-throw-literal": "error"
+  }
+}

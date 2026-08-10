@@ -1,0 +1,10 @@
+name: Bug report
+description: Report a reproducible synthetic emulator issue.
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include the smallest local reproduction and package versions. Never include credentials or live tenant data.
+    validations:
+      required: true

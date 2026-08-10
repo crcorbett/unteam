@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.turbo/
+.cache/
+coverage/
+artifacts/*.tgz
+artifacts/*.tar.gz
+proof/receipts/*.local.json
+*.log
+.DS_Store
