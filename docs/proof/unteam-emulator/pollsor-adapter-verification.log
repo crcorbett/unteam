@@ -1,0 +1,17 @@
+Date: 2026-08-13
+Repository: unteam
+Source candidate: 70feba94014a0a1c431b0bfeb1790d64d58ebc2e
+Installed Effect API: effect@4.0.0-beta.100
+Installed Effect package.json SHA-256: 6bb7ef067b8c5e0a796eb70c96fb43988d9fb6e565fa25ebfb5c1fb433dccc73
+Additional local Effect source consulted: 92f48401426694eb1d9d0552b2f7514b3978e7f4 (newer than the installed API; not used as the compatibility authority)
+
+Command: bun run verification
+Result: exit 0
+Covered: format, lint, type checks, development and production Knip, tests, build, exports, repository validation, governance validation, and packed-artifact proof.
+Observed tests: emulator-core 5 passed; emulator-bun server 3 passed; CLI 2 passed.
+
+Packed artifacts:
+- artifacts/unteam-emulator-core-0.2.0.tgz SHA-256 d4ea8ca27390cae5f277a6496f73890a05fb25a48b300aa57f66789871b0af82
+- artifacts/unteam-emulator-bun-0.2.0.tgz SHA-256 f9d953364f962e953d2f6f4c9a981cc4a107f1e981845c6bb1af7c9843eb0229
+
+The packed-artifact proof passed tarball files, conditional exports, TypeScript declarations, runtime imports, and the @unteam/source-condition. No npm publication, package deployment, Microsoft tenant, provider request, credential, or hosted environment was exercised.
