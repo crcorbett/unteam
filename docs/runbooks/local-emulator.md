@@ -24,6 +24,8 @@ const program = Effect.scoped(
 
 The server binds `127.0.0.1` on an ephemeral port. A caller-owned ingress listener is a separate resource and must be in the same outer Scope for a two-listener journey.
 
+If scenario Connector URLs must target the acquired emulator port, decode a `ServerScenarioV1` with canonical absolute `servicePath` values and call `makeTeamsEmulatorServerFromPaths`. The Bun package resolves each path against the acquired origin before constructing the core scenario; callers must not guess an ephemeral port or import package source.
+
 ## Safe loopback policy
 
 Delivery accepts `http://127.0.0.1`, `http://localhost`, and `http://[::1]` with a path. It rejects HTTPS, public authorities, userinfo, and fragments. No live Microsoft service URL is contacted.
@@ -31,6 +33,8 @@ Delivery accepts `http://127.0.0.1`, `http://localhost`, and `http://[::1]` with
 ## Controls and receipts
 
 Use the versioned `/control/*` routes for installation, Connector outcome, signing-key selection, time, reset, delivery, and snapshot. Decode every response with its versioned Schema. A delivery receipt's HTTP response status and its `receipt.status` are separate: the control response is normally `200`, while the receipt records the caller ingress status or a typed uncertainty.
+
+Delivery defaults to `replayPolicy: "deduplicate"`. Use `"deliver"` only when the journey must send the same Activity ID to a consumer-owned replay/idempotency boundary. Claim and signing-key overrides are bounded adversarial test inputs; keep normal journeys on connection-owned defaults. Snapshot Connector request text is synthetic test content and must never be populated from credentials or live tenant data.
 
 ## Reset and cleanup
 

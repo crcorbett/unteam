@@ -50,6 +50,20 @@
         "docs/proof/unteam-emulator/verification.receipt.json",
         "git ls-remote --symref origin HEAD"
       ]
+    },
+    {
+      "id": "UNTEAM-007",
+      "title": "Support the Pollsor full-system server adapter without importing consumer state",
+      "status": "complete",
+      "owner": "packages/emulator-core and packages/emulator-bun",
+      "evidence": [
+        "packages/emulator-core/src/schemas.ts",
+        "packages/emulator-core/src/service.ts",
+        "packages/emulator-bun/src/server.schemas.ts",
+        "packages/emulator-bun/test/server.test.ts",
+        "Pollsor packages/teams-test-harness/src/server.layer.ts",
+        "Pollsor bun run test:teams-server"
+      ]
     }
   ]
 }

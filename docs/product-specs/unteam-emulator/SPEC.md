@@ -18,7 +18,7 @@ Create a small public strict-Effect monorepo that extracts only Pollsor's synthe
 
 ## Scope
 
-The current slice includes synthetic OpenID/JWK, OAuth client credentials, Connector sendActivity-shaped requests, signed Activity delivery, installation/address state, connector outcomes, rotation, replay, reset, bounded observations, and a closed BotConnectorProfile.
+The current slice includes synthetic OpenID/JWK, OAuth client credentials, Connector sendActivity-shaped requests, signed Activity delivery, installation/address state, connector outcomes, rotation, explicit replay policy, bounded adversarial claim/key overrides, path-resolved scoped server scenarios, reset, bounded observations/protocol counters/synthetic Connector transcripts, and a closed BotConnectorProfile.
 
 ## Non-goals and claim ceiling
 
@@ -26,4 +26,4 @@ No Graph, Teams UI/catalog, production durability, tenant credentials, live Micr
 
 ## Acceptance evidence
 
-The active tasks and dated proof receipt record the exact commands and artifacts. Pollsor remains the source/current consumer; its adapter must consume packed `unteam` artifacts and preserve Pollsor's TeamsChannel ingress/egress boundary.
+The active tasks and dated proof receipt record the exact commands and artifacts. Pollsor remains the source/current consumer; its adapter consumes local packed `unteam` artifacts and preserves Pollsor's TeamsChannel ingress/egress plus tenant/inbox/agent/workflow/outbox composition boundaries.

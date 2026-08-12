@@ -26,6 +26,16 @@
       "claim": "Pollsor has a real packed-artifact consumption/conformance seam",
       "status": "complete",
       "evidence": ["Pollsor codex/use-unteam-emulator branch"]
+    },
+    {
+      "id": "CLAIM-005",
+      "claim": "the local 0.2.0 artifacts support Pollsor's full-system server adapter while Pollsor retains its product composition",
+      "status": "complete",
+      "evidence": [
+        "packages/emulator-bun/test/server.test.ts",
+        "Pollsor packages/teams-test-harness/src/server.layer.ts",
+        "Pollsor apps/web/test-runtime/teams-server.full-system.test.ts"
+      ]
     }
   ],
   "nonClaims": [

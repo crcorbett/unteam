@@ -25,7 +25,7 @@ const program = Effect.scoped(
 );
 ```
 
-Use `@unteam/emulator-core/fixtures` for bounded scenario fixtures and `@unteam/emulator-core/observations` for typed observation views. The public service has closed controls for delivery, installation, Connector outcomes, signing-key selection, simulation time, snapshot, and reset.
+Use `@unteam/emulator-core/fixtures` for bounded scenario fixtures and `@unteam/emulator-core/observations` for typed observation views. The public service has closed controls for delivery, installation, Connector outcomes, signing-key selection, simulation time, snapshot, and reset. `makeTeamsEmulatorServerFromPaths` accepts the Bun-owned `ServerScenarioV1` when a consumer needs connector service URLs resolved against the scoped server's ephemeral origin.
 
 ## CLI
 
@@ -38,7 +38,7 @@ The CLI is a local harness host, not a production service. It binds loopback onl
 
 ## Supported surface and claim ceiling
 
-Supported: synthetic multi-tenant bot identities, users, conversations, local service URLs, OpenID metadata/JWK rotation, OAuth client credentials, Connector `sendActivity`-shaped requests, signed Activity delivery to a caller-supplied safe loopback URL, bounded observations, deterministic controls, duplicate/replay recording, and reset.
+Supported: synthetic multi-tenant bot identities, users, conversations, local service URLs, OpenID metadata/JWK rotation, OAuth client credentials, Connector `sendActivity`-shaped requests, signed Activity delivery to a caller-supplied safe loopback URL, bounded protocol counters and synthetic Connector transcripts, deterministic controls, explicit duplicate/replay delivery policy, bounded adversarial claim/key overrides, and reset.
 
 Not claimed: Microsoft or Teams compatibility, Entra identity, Graph, Teams UI/catalog installation, proactive provider behavior, production durability, cloud deployment, credentials, exactly-once delivery, or any live tenant access. “Installation” means synthetic local address availability; no `conversationUpdate` Activity is implemented.
 

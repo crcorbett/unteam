@@ -5,6 +5,7 @@ import type {
   ConnectionId,
   ConnectionSpec,
   ConnectorOutcome,
+  ConnectorRequestV1,
   EmulatorSnapshotV1,
   InstallationState,
   ObservationId,
@@ -55,6 +56,11 @@ interface State {
   readonly seenActivities: HashSet.HashSet<string>;
   readonly tokens: HashMap.HashMap<string, TokenRecord>;
   readonly observations: readonly ObservationV1[];
+  readonly connectorRequests: readonly ConnectorRequestV1[];
+  readonly jwkRequestCount: number;
+  readonly oauthRequestCount: number;
+  readonly connectorRequestCount: number;
+  readonly controlDeliveryRequestCount: number;
   readonly observationTotal: number;
   readonly observationsTruncated: boolean;
   readonly nextObservation: number;
@@ -102,6 +108,9 @@ export interface ProtocolStateService {
   ) => Effect.Effect<TokenIssue, EmulatorProtocolError>;
   readonly readToken: (token: string) => Effect.Effect<Option.Option<TokenClaims>>;
   readonly recordObservation: (input: ObservationInput) => Effect.Effect<ObservationId>;
+  readonly recordJwkRequest: Effect.Effect<void>;
+  readonly recordConnectorRequest: (request: ConnectorRequestV1) => Effect.Effect<void>;
+  readonly recordControlDelivery: Effect.Effect<void>;
   readonly snapshot: Effect.Effect<EmulatorSnapshotV1>;
   readonly reset: Effect.Effect<void>;
   readonly now: Effect.Effect<number>;
@@ -123,6 +132,11 @@ const emptyState = (scenario: ScenarioV1): State => ({
   seenActivities: HashSet.empty(),
   tokens: HashMap.empty(),
   observations: [],
+  connectorRequests: [],
+  jwkRequestCount: 0,
+  oauthRequestCount: 0,
+  connectorRequestCount: 0,
+  controlDeliveryRequestCount: 0,
   observationTotal: 0,
   observationsTruncated: false,
   nextObservation: 1,
@@ -259,6 +273,10 @@ export const makeProtocolState = (
 
     const issueToken = (clientId: string, clientSecret: string, scope: string) =>
       Effect.gen(function* () {
+        yield* SynchronizedRef.update(state, (current) => ({
+          ...current,
+          oauthRequestCount: current.oauthRequestCount + 1,
+        }));
         const nowMillis = yield* now;
         if (
           clientId !== scenario.bot.botAppId ||
@@ -319,6 +337,13 @@ export const makeProtocolState = (
         activeTokenCount: HashMap.size(current.tokens),
         prunedTokenCount: current.prunedTokens,
         seenActivityCount: HashSet.size(current.seenActivities),
+        protocol: {
+          jwkRequestCount: current.jwkRequestCount,
+          oauthRequestCount: current.oauthRequestCount,
+          connectorRequestCount: current.connectorRequestCount,
+          controlDeliveryRequestCount: current.controlDeliveryRequestCount,
+        },
+        connectorRequests: current.connectorRequests,
         observations: observationSummary(current, scenario.observationCapacity),
       });
     });
@@ -356,6 +381,23 @@ export const makeProtocolState = (
       issueToken,
       readToken,
       recordObservation,
+      recordJwkRequest: SynchronizedRef.update(state, (current) => ({
+        ...current,
+        jwkRequestCount: current.jwkRequestCount + 1,
+      })),
+      recordConnectorRequest: (request) =>
+        SynchronizedRef.update(state, (current) => ({
+          ...current,
+          connectorRequests:
+            current.connectorRequests.length < scenario.observationCapacity
+              ? [...current.connectorRequests, request]
+              : current.connectorRequests,
+          connectorRequestCount: current.connectorRequestCount + 1,
+        })),
+      recordControlDelivery: SynchronizedRef.update(state, (current) => ({
+        ...current,
+        controlDeliveryRequestCount: current.controlDeliveryRequestCount + 1,
+      })),
       snapshot,
       reset,
       now,

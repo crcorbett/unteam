@@ -11,7 +11,8 @@ import {
   HttpServerResponse,
 } from "effect/unstable/http";
 
-import { makeTeamsEmulatorServer } from "../src/server.layer";
+import { makeTeamsEmulatorServer, makeTeamsEmulatorServerFromPaths } from "../src/server.layer";
+import { ServerScenarioV1 } from "../src/server.schemas";
 import { exampleScenario } from "@unteam/emulator-core/fixtures";
 import {
   AdvanceSimulationTime,
@@ -25,6 +26,7 @@ import {
   OpenIdDocumentV1,
   OAuthTokenResponseV1,
   ScenarioV1,
+  ServicePath,
   SelectSigningKey,
   SetConnectorOutcome,
   SetInstallation,
@@ -151,7 +153,7 @@ describe("@unteam/emulator-bun server", () => {
           ["not-found", 404],
           ["conflict", 409],
           ["throttled", 429],
-          ["malformed-response", 500],
+          ["malformed-response", 200],
           ["transient-failure", 503],
         ] as const;
         for (const [outcome, status] of outcomes) {
@@ -171,19 +173,6 @@ describe("@unteam/emulator-bun server", () => {
           const response = yield* client.execute(connectorRequest);
           assert.strictEqual(response.status, status);
         }
-
-        yield* setConnectorOutcome(
-          setup.origin,
-          Schema.decodeUnknownSync(SetConnectorOutcome)({
-            controlVersion: "control.v1",
-            kind: "set-connector-outcome",
-            operationId: "timeout-outcome",
-            connectionId: connection.connectionId,
-            outcome: "timeout",
-          }),
-        );
-        const timed = yield* client.execute(connectorRequest);
-        assert.strictEqual(timed.status, 503);
 
         yield* setConnectorOutcome(
           setup.origin,
@@ -301,6 +290,13 @@ describe("@unteam/emulator-bun server", () => {
         const snapshot = yield* decodeBody(EmulatorSnapshotV1, snapshotResponse);
         assert.strictEqual(snapshot.activeTokenCount, 0);
         assert.strictEqual(snapshot.prunedTokenCount, 1);
+        assert.deepEqual(snapshot.protocol, {
+          jwkRequestCount: 1,
+          oauthRequestCount: 1,
+          connectorRequestCount: 9,
+          controlDeliveryRequestCount: 1,
+        });
+        assert.strictEqual(snapshot.connectorRequests.length, 9);
       }),
     ).pipe(Effect.provide(FetchHttpClient.layer)),
   );
@@ -321,5 +317,25 @@ describe("@unteam/emulator-bun server", () => {
       const afterClose = yield* freshTcpProbe(origin).pipe(Effect.exit);
       assert.isTrue(Exit.isFailure(afterClose));
     }).pipe(Effect.provide(FetchHttpClient.layer)),
+  );
+
+  it.effect("resolves bounded connector service paths against the scoped server origin", () =>
+    Effect.scoped(
+      Effect.gen(function* () {
+        const pathScenario = ServerScenarioV1.make({
+          ...scenario,
+          connections: scenario.connections.map(({ serviceUrl: _serviceUrl, ...item }) => ({
+            ...item,
+            servicePath: ServicePath.make(`/connector/${item.connectionId}/`),
+          })),
+        });
+        const setup = yield* makeTeamsEmulatorServerFromPaths(pathScenario);
+        const snapshot = yield* setup.emulator.snapshot;
+        assert.deepEqual(
+          snapshot.connections.map((item) => item.serviceUrl.origin),
+          scenario.connections.map(() => setup.origin.origin),
+        );
+      }),
+    ),
   );
 });

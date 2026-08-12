@@ -33,7 +33,8 @@ interface ActivitySigningInput {
   readonly keyId: SigningKeyId;
   readonly issuer: URL;
   readonly audience: BotAppId;
-  readonly serviceUrl: ServiceUrl;
+  readonly tokenServiceUrl: ServiceUrl;
+  readonly activityServiceUrl: ServiceUrl;
   readonly tenantId: TenantId;
   readonly userId: UserId;
   readonly conversationId: ConversationId;
@@ -148,7 +149,7 @@ const makeSigner = (keys: readonly KeyRecord[]) => {
           aud: input.audience,
           nbf: nowSeconds - 60,
           exp: nowSeconds + 60,
-          serviceUrl: input.serviceUrl,
+          serviceUrl: input.tokenServiceUrl,
         };
         const encodedClaims = yield* Schema.encodeUnknownEffect(JwtClaims)(claims).pipe(
           Effect.mapError(() => new ActivitySigningError({ code: "claims-encoding-failure" })),
@@ -169,7 +170,7 @@ const makeSigner = (keys: readonly KeyRecord[]) => {
           type: "message",
           id: input.activityId,
           timestamp: DateTime.formatIso(DateTime.makeUnsafe(input.nowMillis)),
-          serviceUrl: input.serviceUrl,
+          serviceUrl: input.activityServiceUrl,
           channelId: "msteams",
           channelData: { tenant: { id: input.tenantId } },
           from: { aadObjectId: input.userId },

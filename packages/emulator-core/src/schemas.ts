@@ -46,6 +46,22 @@ export type LoopbackUrl = Schema.Schema.Type<typeof LoopbackUrl>;
 export const ServiceUrl = Schema.URLFromString.pipe(Schema.brand("ServiceUrl"));
 export type ServiceUrl = Schema.Schema.Type<typeof ServiceUrl>;
 
+export const ServicePath = Text.check(
+  Schema.makeFilter(
+    (value: string) =>
+      value.startsWith("/") &&
+      value.endsWith("/") &&
+      !value.includes("//") &&
+      !value.includes("\\") &&
+      !value.includes("%") &&
+      !value.includes("?") &&
+      !value.includes("#") &&
+      !value.split("/").some((segment) => segment === "." || segment === ".."),
+    { description: "a canonical absolute connector service path ending in a slash" },
+  ),
+).pipe(Schema.brand("ServicePath"));
+export type ServicePath = Schema.Schema.Type<typeof ServicePath>;
+
 export const DurationFromMillis = Schema.DurationFromMillis.check(
   Schema.makeFilter<Duration.Duration>(
     (duration) => Duration.isFinite(duration) && Duration.isPositive(duration),
@@ -129,6 +145,16 @@ export const ScenarioV1 = Schema.Struct({
 });
 export type ScenarioV1 = Schema.Schema.Type<typeof ScenarioV1>;
 
+export const ActivityDeliveryClaims = Schema.Struct({
+  audience: Schema.optionalKey(BotAppId),
+  tokenServiceUrl: Schema.optionalKey(ServiceUrl),
+  activityServiceUrl: Schema.optionalKey(ServiceUrl),
+  tenantId: Schema.optionalKey(TenantId),
+  userId: Schema.optionalKey(UserId),
+  conversationId: Schema.optionalKey(ConversationId),
+});
+export type ActivityDeliveryClaims = Schema.Schema.Type<typeof ActivityDeliveryClaims>;
+
 export const DeliverActivity = Schema.Struct({
   controlVersion: Schema.Literal("control.v1"),
   kind: Schema.Literal("deliver-activity"),
@@ -137,6 +163,9 @@ export const DeliverActivity = Schema.Struct({
   activityId: ActivityId,
   text: LongText,
   ingressUrl: LoopbackUrl,
+  replayPolicy: Schema.optionalKey(Schema.Literals(["deduplicate", "deliver"])),
+  signingKeyId: Schema.optionalKey(SigningKeyId),
+  claims: Schema.optionalKey(ActivityDeliveryClaims),
 });
 export type DeliverActivity = Schema.Schema.Type<typeof DeliverActivity>;
 
@@ -276,6 +305,21 @@ export const ObservationSummaryV1 = Schema.Struct({
 });
 export type ObservationSummaryV1 = Schema.Schema.Type<typeof ObservationSummaryV1>;
 
+export const ConnectorRequestV1 = Schema.Struct({
+  connectionId: ConnectionId,
+  conversationId: ConversationId,
+  text: LongText,
+});
+export type ConnectorRequestV1 = Schema.Schema.Type<typeof ConnectorRequestV1>;
+
+export const ProtocolCountersV1 = Schema.Struct({
+  jwkRequestCount: NonNegativeInt,
+  oauthRequestCount: NonNegativeInt,
+  connectorRequestCount: NonNegativeInt,
+  controlDeliveryRequestCount: NonNegativeInt,
+});
+export type ProtocolCountersV1 = Schema.Schema.Type<typeof ProtocolCountersV1>;
+
 export const ConnectionSnapshotV1 = Schema.Struct({
   connectionId: ConnectionId,
   tenantId: TenantId,
@@ -296,6 +340,8 @@ export const EmulatorSnapshotV1 = Schema.Struct({
   activeTokenCount: NonNegativeInt,
   prunedTokenCount: NonNegativeInt,
   seenActivityCount: NonNegativeInt,
+  protocol: ProtocolCountersV1,
+  connectorRequests: boundedArray(ConnectorRequestV1, 128),
   observations: ObservationSummaryV1,
 });
 export type EmulatorSnapshotV1 = Schema.Schema.Type<typeof EmulatorSnapshotV1>;
@@ -420,6 +466,9 @@ export const deliverActivityKeys = [
   "activityId",
   "text",
   "ingressUrl",
+  "replayPolicy",
+  "signingKeyId",
+  "claims",
 ] as const;
 
 export const setInstallationKeys = [

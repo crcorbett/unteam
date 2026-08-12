@@ -5,7 +5,7 @@
 - The TestClock is created in the outer emulator Layer and is read effectfully. It is never acquired inside an already-finalized inner Scope.
 - `advanceTime` accepts a positive `Duration` schema value. Live and test clocks share the same service contract.
 - OAuth records hold raw bearer values only in private state. Every clock read prunes expired records; snapshots expose counts, not tokens.
-- Observations are bounded by scenario capacity. Once full, new observations increment `total` and set `truncated` while retaining the bounded tail/order defined by the state owner.
+- Observations and the synthetic Connector request transcript are bounded by scenario capacity. Once observations are full, new observations increment `total` and set `truncated`; protocol counters continue to record exact request totals without retaining additional content.
 - `reset` clears connections to their scenario baseline, tokens, activity replay ledger, observations, counters, and clock offset.
 - Delivery is one attempt. A transport error produces an `uncertain` receipt and never claims exactly-once or successful provider processing.
 - Expected provider faults remain typed responses. Defects, interruption, and listener acquisition failures are not converted into arbitrary protocol messages.

@@ -76,10 +76,6 @@ export const makeTeamsEmulatorService = (
 ): TeamsEmulatorService => {
   const deliverActivity = (request: DeliverActivity) =>
     Effect.gen(function* () {
-      const connection = yield* state.readConnection(request.connectionId);
-      if (Option.isNone(connection)) return yield* deliveryError("unknown-connection");
-      if (connection.value.installation === "blocked") return yield* deliveryError("blocked-installation");
-      if (connection.value.installation === "uninstalled") return yield* deliveryError("uninstalled");
       if (!safeLoopback(request.ingressUrl)) {
         yield* state.recordObservation({
           kind: "delivery",
@@ -89,9 +85,14 @@ export const makeTeamsEmulatorService = (
         });
         return yield* deliveryError("invalid-loopback-target");
       }
+      yield* state.recordControlDelivery;
+      const connection = yield* state.readConnection(request.connectionId);
+      if (Option.isNone(connection)) return yield* deliveryError("unknown-connection");
+      if (connection.value.installation === "blocked") return yield* deliveryError("blocked-installation");
+      if (connection.value.installation === "uninstalled") return yield* deliveryError("uninstalled");
 
       const seen = yield* state.markActivity(request.activityId);
-      if (seen === "duplicate") {
+      if (seen === "duplicate" && request.replayPolicy !== "deliver") {
         const observationId = yield* state.recordObservation({
           kind: "replay",
           detail: "duplicate",
@@ -111,18 +112,21 @@ export const makeTeamsEmulatorService = (
       }
 
       const nowMillis = yield* state.now;
-      const keyId = yield* state
-        .readSelectedSigningKey(request.connectionId)
-        .pipe(Effect.mapError(() => deliveryError("signing-failure")));
+      const keyId =
+        request.signingKeyId ??
+        (yield* state
+          .readSelectedSigningKey(request.connectionId)
+          .pipe(Effect.mapError(() => deliveryError("signing-failure"))));
       const signed = yield* signer
         .sign({
           keyId,
           issuer: origin,
-          audience: state.scenario.bot.botAppId,
-          serviceUrl: connection.value.serviceUrl,
-          tenantId: connection.value.tenantId,
-          userId: connection.value.userId,
-          conversationId: connection.value.conversationId,
+          audience: request.claims?.audience ?? state.scenario.bot.botAppId,
+          tokenServiceUrl: request.claims?.tokenServiceUrl ?? connection.value.serviceUrl,
+          activityServiceUrl: request.claims?.activityServiceUrl ?? connection.value.serviceUrl,
+          tenantId: request.claims?.tenantId ?? connection.value.tenantId,
+          userId: request.claims?.userId ?? connection.value.userId,
+          conversationId: request.claims?.conversationId ?? connection.value.conversationId,
           activityId: request.activityId,
           text: request.text,
           nowMillis,

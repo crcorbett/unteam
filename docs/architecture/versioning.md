@@ -15,3 +15,5 @@ The protocol has independent versioned envelope families. A change to one family
 Exact excess-property policy applies to scenario/control/protocol request envelopes at their ingress boundary. Meaningful text, key material, array, observation, and connection bounds are part of the contract. Expected failures use bounded codes/details and explicit status mapping.
 
 Public package versions are independent of envelope versions. A breaking package API or schema change requires a package major/version decision; a compatible envelope addition may be released without changing unrelated envelope markers.
+
+`@unteam/emulator-core` and `@unteam/emulator-bun` `0.2.0` are the current local artifact versions. The minor version records the expanded `snapshot.v1` Type, the Bun `ServerScenarioV1` path-resolving constructor, and new optional `control.v1` delivery fields. No registry publication is implied by this local version.

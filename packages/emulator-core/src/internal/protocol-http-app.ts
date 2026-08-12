@@ -12,6 +12,7 @@ import {
   ActivityId,
   ConnectorSendRequest,
   ConnectorSendResponse,
+  ConnectorRequestV1,
   ConnectionId,
   ConversationId,
   ControlReceiptV1,
@@ -183,7 +184,8 @@ export const makeProtocolHttpApp = (options: {
       }),
     );
     const keys = HttpRouter.route("GET", "/.well-known/keys", () =>
-      options.state.readSigningKeys.pipe(
+      options.state.recordJwkRequest.pipe(
+        Effect.andThen(options.state.readSigningKeys),
         Effect.map((keys) => ({ protocolVersion: "protocol.v1", keys }) satisfies JwkSetV1),
         Effect.flatMap((body) => schemaJson(JwkSetV1)(body)),
       ),
@@ -301,6 +303,13 @@ export const makeProtocolHttpApp = (options: {
           });
           return yield* controlErrorResponse("conversation-conflict", 409);
         }
+        yield* options.state.recordConnectorRequest(
+          ConnectorRequestV1.make({
+            connectionId: connection.value.connectionId,
+            conversationId: connection.value.conversationId,
+            text: decoded.value.text,
+          }),
+        );
         const outcome = connection.value.connectorOutcome;
         if (outcome === "success") {
           yield* options.state.recordObservation({
@@ -321,7 +330,7 @@ export const makeProtocolHttpApp = (options: {
             connectionId: connection.value.connectionId,
             status: 503,
           });
-          return yield* controlErrorResponse("transient-failure", 503);
+          return yield* Effect.never;
         }
         if (outcome === "interrupted") {
           yield* options.state.recordObservation({
@@ -346,21 +355,37 @@ export const makeProtocolHttpApp = (options: {
                     : outcome === "malformed-response"
                       ? 500
                       : 503;
+        if (outcome === "malformed-response") {
+          yield* options.state.recordObservation({
+            kind: "connector-request",
+            detail: "malformed-response",
+            connectionId: connection.value.connectionId,
+            status: 200,
+          });
+          return yield* schemaJson(ProtocolErrorResponseV1)({
+            errorVersion: "control-error.v1",
+            code: "malformed-response",
+          });
+        }
         const code = errorForStatus(status);
         yield* options.state.recordObservation({
           kind: "connector-request",
           detail:
             outcome === "throttled"
               ? "throttled"
-              : outcome === "malformed-response"
-                ? "malformed-response"
-                : outcome === "transient-failure"
-                  ? "transient-failure"
-                  : "uncertain",
+              : outcome === "transient-failure"
+                ? "transient-failure"
+                : "uncertain",
           connectionId: connection.value.connectionId,
           status,
         });
-        return yield* controlErrorResponse(code, status);
+        return yield* controlErrorResponse(code, status).pipe(
+          Effect.map((response) =>
+            outcome === "throttled"
+              ? response.pipe(HttpServerResponse.setHeader("retry-after", "1"))
+              : response,
+          ),
+        );
       }).pipe(Effect.catch(() => controlErrorResponse("malformed-request", 400))),
     );
 
@@ -380,12 +405,10 @@ export const makeProtocolHttpApp = (options: {
           Effect.flatMap((body) => decodeExact(schema, keys, body)),
           Effect.flatMap((input) => handler(input)),
           Effect.flatMap((receipt) => schemaJson(ControlReceiptV1)(receipt)),
-          Effect.catch((error: unknown) => {
-            if (error instanceof EmulatorControlError) {
-              return controlErrorResponse(controlErrorCode(error), controlStatus(error));
-            }
-            return controlErrorResponse("malformed-response", 500);
-          }),
+          Effect.catchTag("EmulatorControlError", (error) =>
+            controlErrorResponse(controlErrorCode(error), controlStatus(error)),
+          ),
+          Effect.catch(() => controlErrorResponse("malformed-request", 400)),
         ),
       );
 
@@ -413,11 +436,10 @@ export const makeProtocolHttpApp = (options: {
             Effect.flatMap((body) => decodeExact(DeliverActivity, deliverActivityKeys, body)),
             Effect.flatMap((input) => options.emulator.deliverActivity(input)),
             Effect.flatMap((receipt) => schemaJson(DeliveryReceiptV1)(receipt)),
-            Effect.catch((error: unknown) =>
-              error instanceof EmulatorDeliveryError
-                ? controlErrorResponse(deliveryCode(error), deliveryStatus(error))
-                : controlErrorResponse("malformed-response", 500),
+            Effect.catchTag("EmulatorDeliveryError", (error) =>
+              controlErrorResponse(deliveryCode(error), deliveryStatus(error)),
             ),
+            Effect.catch(() => controlErrorResponse("malformed-request", 400)),
           ),
         ),
         HttpRouter.route("GET", "/control/snapshot", () =>

@@ -2,11 +2,11 @@
 
 `unteam` is intentionally a three-owner topology. Libraries own no process runtime; the CLI is the only application runtime.
 
-| Owner                   | Owns                                                                                                                                                           | Must not own                                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `@unteam/emulator-core` | Versioned schemas, exact ingress decoding, typed errors, state, activity signing, protocol HTTP application, public `TeamsEmulator` service, test substitution | A listener, filesystem/config, process signals, Pollsor domain state, raw public HTTP clients, raw tokens or keys       |
-| `@unteam/emulator-bun`  | Scoped Effect Platform Bun listener, stable loopback origin, Fetch client composition, server host composition                                                 | CLI configuration, process signals, arbitrary hostnames, raw `Bun.listen`/`Bun.connect`, a public generic plugin system |
-| `unteam`                | Config/ConfigProvider, config file boundary, CLI arguments, structured startup logging, signal handling, one scoped application runtime                        | Protocol state, product workflows, a second listener, package-specific domain logic                                     |
+| Owner                   | Owns                                                                                                                                                                                                                          | Must not own                                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `@unteam/emulator-core` | Versioned schemas, exact ingress decoding, typed errors, state, activity signing, protocol HTTP application, public `TeamsEmulator` service, test substitution, protocol counters and bounded synthetic Connector transcripts | A listener, filesystem/config, process signals, Pollsor domain state, raw public HTTP clients, raw tokens or keys       |
+| `@unteam/emulator-bun`  | Scoped Effect Platform Bun listener, stable loopback origin, connector-path resolution after port acquisition, Fetch client composition, server host composition                                                              | CLI configuration, process signals, arbitrary hostnames, raw `Bun.listen`/`Bun.connect`, a public generic plugin system |
+| `unteam`                | Config/ConfigProvider, config file boundary, CLI arguments, structured startup logging, signal handling, one scoped application runtime                                                                                       | Protocol state, product workflows, a second listener, package-specific domain logic                                     |
 
 ## Call graph
 
@@ -25,7 +25,7 @@ flowchart TD
   Client --> Ingress["caller-owned loopback ingress"]
 ```
 
-The public service exposes `origin`, delivery/control Effects, snapshots, and bounded observations. It does not expose the internal state service, signer, HTTP client/server, token records, CryptoKeys, or consumer Layers.
+The public service exposes `origin`, delivery/control Effects, snapshots, bounded observations, protocol counters, and a bounded synthetic Connector transcript. It does not expose the internal state service, signer, HTTP client/server, token records, CryptoKeys, or consumer Layers.
 
 ## Repository variation
 
