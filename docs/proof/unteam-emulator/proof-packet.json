@@ -1,6 +1,6 @@
 {
   "packetVersion": "proof.v1",
-  "updated": "2026-08-10",
+  "updated": "2026-08-13",
   "repository": "unteam",
   "claims": [
     {
@@ -32,6 +32,7 @@
       "claim": "the local 0.2.0 artifacts support Pollsor's full-system server adapter while Pollsor retains its product composition",
       "status": "complete",
       "evidence": [
+        "pollsor-adapter-verification.receipt.json",
         "packages/emulator-bun/test/server.test.ts",
         "Pollsor packages/teams-test-harness/src/server.layer.ts",
         "Pollsor apps/web/test-runtime/teams-server.full-system.test.ts"

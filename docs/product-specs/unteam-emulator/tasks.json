@@ -61,6 +61,7 @@
         "packages/emulator-core/src/service.ts",
         "packages/emulator-bun/src/server.schemas.ts",
         "packages/emulator-bun/test/server.test.ts",
+        "docs/proof/unteam-emulator/pollsor-adapter-verification.receipt.json",
         "Pollsor packages/teams-test-harness/src/server.layer.ts",
         "Pollsor bun run test:teams-server"
       ]

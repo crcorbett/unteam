@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "invariant": "The local unteam 0.2.0 artifacts expose a schema-decoded, Scope-owned path-resolving server constructor and bounded semantic controls required by the Pollsor server adapter without importing Pollsor tenant, inbox, agent, workflow, or outbox state.",
+  "target": "unteam source candidate 70feba94014a0a1c431b0bfeb1790d64d58ebc2e and local 0.2.0 packed artifacts",
+  "captureLimitBytes": 4096,
+  "capturedBytes": 532,
+  "truncated": false,
+  "excerpt": "The exact unteam candidate passed the full repository verification gate. Core 5/5, Bun server 3/3, and CLI 2/2 tests passed; both 0.2.0 tarballs passed file, export, declaration, runtime-import, and source-condition checks. The server constructor resolves canonical paths only after acquiring its scoped loopback origin; signed delivery, explicit replay policy, claim overrides, protocol counters, bounded Connector transcripts, lifecycle controls, and deterministic time remain unteam-owned. Pollsor product state was not imported.",
+  "details": {
+    "path": "docs/proof/unteam-emulator/pollsor-adapter-verification.log",
+    "sha256": "35d96c56653a29afc3393c5463313aa2ac21a397d995246b20185d1216034168"
+  },
+  "recovery": "Revert candidate 70feba94014a0a1c431b0bfeb1790d64d58ebc2e and return consumers to the earlier 0.1.0 artifact contract. Do not recover by copying Pollsor product state into unteam or by weakening loopback, Schema, Scope, redaction, replay, or observation bounds.",
+  "postcondition": "The local 0.2.0 artifacts are available for Pollsor's repository-local adapter migration; consumer integration remains separately proved in Pollsor.",
+  "limitations": [
+    "The artifacts are local repository products and require an explicit local artifact build before a clean Pollsor checkout can install them.",
+    "The exact Pollsor two-listener integration and product composition are owned and proved by Pollsor rather than this receipt."
+  ],
+  "nonClaims": [
+    "No npm publication, external package delivery, release, provider request, credential, deployment, Preview, Production, Microsoft, Entra, Teams, Graph, Bot Framework, tenant, real-user-content, or production-fidelity behavior was exercised or proved.",
+    "Passing local protocol simulations do not qualify Microsoft compatibility, exactly-once delivery, durable recovery, multi-process coordination, or hosted behavior."
+  ]
+}
