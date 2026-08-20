@@ -29,3 +29,11 @@ bun run verification
 ```
 
 `verification` covers formatting, lint, typechecking, Knip, package tests, build, export/package checks, documentation/governance checks, and packed-artifact proof.
+
+The packed consumer uses the repository's existing `skipLibCheck` policy. The
+published Effect beta.107 package has an internal declaration mismatch:
+`Schema.d.ts` refers to `SchemaAST.Sentinel`, while the published
+`SchemaAST.d.ts` omits that source-exported type. The consumer check still uses
+the unteam declaration surfaces to typecheck its source, then exercises both
+default and source-condition runtime imports. It does not claim that Effect's
+own published declaration files pass a fresh library-internal check.

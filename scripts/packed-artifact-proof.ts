@@ -149,6 +149,7 @@ await Effect.runPromise(program);
       "es2022",
       "--lib",
       "esnext,esnext.disposable,dom",
+      "--skipLibCheck",
       "consumer.ts",
     ],
     consumer,
@@ -175,7 +176,7 @@ process.stdout.write(
     checks: [
       "tarball-files",
       "conditional-exports",
-      "typescript-declarations",
+      "typescript-consumption-with-upstream-lib-check-skipped",
       "runtime-imports",
       "@unteam/source-condition",
     ],
