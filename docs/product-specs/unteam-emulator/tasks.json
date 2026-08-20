@@ -95,7 +95,7 @@
     {
       "id": "UNTEAM-009",
       "title": "Expose a configured standalone listener and HTTP readiness contract",
-      "status": "in_progress",
+      "status": "complete",
       "owner": "apps/cli and packages/emulator-bun",
       "acceptance": [
         "Require an Effect CLI `--port` value decoded by a branded bounded Schema and bind only 127.0.0.1; keep one BunRuntime.runMain application and one scoped BunHttpServer finalizer.",
@@ -115,7 +115,8 @@
         "apps/cli/test",
         "packages/emulator-bun/src",
         "packages/emulator-bun/test",
-        "docs/runbooks/local-emulator.md"
+        "docs/runbooks/local-emulator.md",
+        "docs/proof/unteam-emulator/configured-server.receipt.json"
       ]
     }
   ]

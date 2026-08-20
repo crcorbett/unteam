@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "invariant": "UNTEAM-009 is complete only when the standalone CLI decodes an explicit loopback port, serves secret-negative UnteamReadyV2 over HTTP and stdout, owns its scoped listener finalizer, and proves invalid startup plus same-port cleanup without importing consumer state.",
+  "target": "unteam implementation revision 1a7409f on codex/configured-emulator-server",
+  "captureLimitBytes": 4096,
+  "capturedBytes": 664,
+  "truncated": false,
+  "excerpt": "Effect beta.107 CLI and Bun server checks passed. The compiled executable required --scenario and --port, rejected missing/invalid/occupied ports and invalid scenarios, emitted one unteam.ready.v2 stdout record, served the identical Schema-decoded GET /ready response, stopped its exact listener on SIGTERM, and restarted fresh on the same port. The final repository verification also passed formatting, lint, type, dependency, test, build, export, governance, repository and packed-artifact checks.",
+  "details": {
+    "path": "docs/proof/unteam-emulator/configured-server-verification.md",
+    "sha256": "b2ea057a0afe2fe5935676bd9e4d893fc0a0ad3cefe1b7d0a0a862287ab67b42"
+  },
+  "recovery": "Revert the configured-port/readiness commit and this proof commit together. Do not leave a readiness.v2 consumer pointed at a readiness.v1 executable.",
+  "postcondition": "unteam can be started independently on a chosen loopback port and consumers can connect by origin without owning the emulator process or importing its implementation.",
+  "limitations": [
+    "The executable and listener were exercised only on the local macOS/Bun environment.",
+    "The listener intentionally accepts only 127.0.0.1; remote hosting needs a separate security and evidence design."
+  ],
+  "nonClaims": [
+    "No Microsoft, Teams, Entra, Graph, provider tenant, credential, hosted, remote-network, TLS, deployment, publication, release or production behaviour was exercised or proved.",
+    "Passing local lifecycle tests does not establish cross-platform distribution, durability, provider fidelity or production readiness."
+  ]
+}
