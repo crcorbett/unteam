@@ -1,4 +1,4 @@
-import { Duration, Effect, Option, Schema } from "effect";
+import { Duration, Effect, Schema } from "effect";
 import * as SchemaError from "effect/SchemaError";
 import * as SchemaIssue from "effect/SchemaIssue";
 
@@ -436,11 +436,7 @@ export const decodeExact = <S extends Schema.Constraint>(
     const extra = Object.keys(input).find((key) => !keys.includes(key));
     if (extra !== undefined) {
       return Effect.fail(
-        new SchemaError.SchemaError(
-          new SchemaIssue.InvalidValue(Option.some(extra), {
-            message: "unexpected property",
-          }),
-        ),
+        new SchemaError.SchemaError(new SchemaIssue.InvalidValue({ message: "unexpected property" })),
       );
     }
   }

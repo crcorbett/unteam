@@ -5,9 +5,30 @@
 ```sh
 bun install --frozen-lockfile
 bun run build
+bun run build:executable
 ```
 
 For a clean consumer, use the repository's packed-artifact proof; do not import `src` as a substitute for a package artifact.
+
+## Standalone process lifecycle
+
+Prepare a JSON file matching the encoded `ServerScenarioV1` shape, then run:
+
+```sh
+./artifacts/unteam --scenario ./unteam.scenario.json
+```
+
+The CLI rejects a missing file, malformed JSON, unknown `scenarioVersion`,
+excess properties, invalid service paths, and invalid bounds before acquiring a
+listener. Keep the scenario file owner-readable only because it contains the
+synthetic Connector client secret.
+
+Read exactly one newline-delimited `unteam.ready.v1` record from stdout. It
+contains the loopback origin, issuer, OpenID/JWK, OAuth, control, and resolved
+Connector service URLs. Do not treat help text or stderr diagnostics as
+readiness. Send `SIGTERM` or `SIGINT` to stop the process, wait for exit, then
+probe the recorded origin: a fresh connection must fail. The process owns its
+server finalizer; a consumer owns only its process handle and client resources.
 
 ## Programmatic lifecycle
 
@@ -38,7 +59,12 @@ Delivery defaults to `replayPolicy: "deduplicate"`. Use `"deliver"` only when th
 
 ## Reset and cleanup
 
-Call the versioned reset control between journeys. Reset clears scenario state, token records, replay IDs, observations, and simulated time. Scope finalization stops listeners and releases WebCrypto/HTTP resources. If a test fails, verify both emulator and caller ingress ports with the Effect Platform socket probe before continuing.
+Call the versioned reset control between journeys. Reset clears scenario state,
+token records, replay IDs, observations, and simulated time. Scope finalization
+stops listeners and releases WebCrypto/HTTP resources. The standalone process
+follows the same rule through `BunRuntime.runMain` interruption. If a test
+fails, verify both emulator and caller ingress ports with the Effect Platform
+socket probe before continuing.
 
 ## Receipts and secrets
 

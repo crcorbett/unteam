@@ -1,6 +1,14 @@
 # Lifecycle, state, and reset invariants
 
 - The outer caller Scope owns the Bun server, core Layer resources, WebCrypto keys, clock, and any request resources.
+- The standalone CLI has one root `BunRuntime.runMain` program. `SIGINT` or
+  `SIGTERM` interrupts that root fibre; its outer Scope finalizes the Bun server.
+  There are no manual signal listeners or nested runtime executions.
+- Scenario JSON is fully read and Schema-decoded before the listener is
+  acquired. Invalid startup emits no readiness record.
+- Readiness is emitted only after the listener and scenario state are ready.
+  It is one bounded `unteam.ready.v1` stdout line and is not a server finalizer
+  or a second lifecycle owner.
 - `BunHttpServer.make` is the listener boundary. Its finalizer stops the listener; no raw Bun or Node lifecycle is retained.
 - The TestClock is created in the outer emulator Layer and is read effectfully. It is never acquired inside an already-finalized inner Scope.
 - `advanceTime` accepts a positive `Duration` schema value. Live and test clocks share the same service contract.

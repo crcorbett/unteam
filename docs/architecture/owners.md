@@ -2,18 +2,20 @@
 
 `unteam` is intentionally a three-owner topology. Libraries own no process runtime; the CLI is the only application runtime.
 
-| Owner                   | Owns                                                                                                                                                                                                                          | Must not own                                                                                                            |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `@unteam/emulator-core` | Versioned schemas, exact ingress decoding, typed errors, state, activity signing, protocol HTTP application, public `TeamsEmulator` service, test substitution, protocol counters and bounded synthetic Connector transcripts | A listener, filesystem/config, process signals, Pollsor domain state, raw public HTTP clients, raw tokens or keys       |
-| `@unteam/emulator-bun`  | Scoped Effect Platform Bun listener, stable loopback origin, connector-path resolution after port acquisition, Fetch client composition, server host composition                                                              | CLI configuration, process signals, arbitrary hostnames, raw `Bun.listen`/`Bun.connect`, a public generic plugin system |
-| `unteam`                | Config/ConfigProvider, config file boundary, CLI arguments, structured startup logging, signal handling, one scoped application runtime                                                                                       | Protocol state, product workflows, a second listener, package-specific domain logic                                     |
+| Owner                   | Owns                                                                                                                                                                                                                          | Must not own                                                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `@unteam/emulator-core` | Versioned schemas, exact ingress decoding, typed errors, state, activity signing, protocol HTTP application, public `TeamsEmulator` service, test substitution, protocol counters and bounded synthetic Connector transcripts | A listener, filesystem/config, process signals, Pollsor domain state, raw public HTTP clients, raw tokens or keys             |
+| `@unteam/emulator-bun`  | Scoped Effect Platform Bun listener, stable loopback origin, connector-path resolution after port acquisition, Fetch client composition, server host composition                                                              | CLI configuration, process signals, arbitrary hostnames, raw `Bun.listen`/`Bun.connect`, a public generic plugin system       |
+| `unteam`                | Required JSON `ServerScenarioV1` file ingress, CLI help/arguments, `unteam.ready.v1`, bounded diagnostics, `BunRuntime.runMain`, and one scoped application runtime                                                           | Protocol state, product workflows, manual signal listeners, nested runtimes, a second listener, package-specific domain logic |
 
 ## Call graph
 
 ```mermaid
 flowchart TD
   CLI["apps/cli main"] --> Runtime["apps/cli runtime"]
+  CLI --> Scenario["Effect CLI fileSchema -> ServerScenarioV1"]
   Runtime --> BunHost["emulator-bun server.layer"]
+  Runtime --> Ready["Schema-encoded unteam.ready.v1 stdout"]
   BunHost --> CoreLayer["emulator-core live.layer"]
   CoreLayer --> State["ProtocolState + SimulationClock"]
   CoreLayer --> Signer["ActivitySigner"]

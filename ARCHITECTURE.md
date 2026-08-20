@@ -4,7 +4,11 @@
 
 `@unteam/emulator-bun` owns the scoped Effect Platform Bun HTTP server and the private loopback HTTP delivery adapter. It composes core Layers and exposes a stable local origin without exposing a raw server, client, socket, token, or key.
 
-`unteam` CLI owns configuration decoding, filesystem/configuration boundaries, structured logging, signal handling, and one application runtime. Package code does not run Effects at import time.
+`unteam` CLI owns its required JSON scenario-file boundary, versioned readiness,
+bounded diagnostics, and one `BunRuntime.runMain` application runtime. Effect
+CLI reads and Schema-decodes `ServerScenarioV1` before listener acquisition.
+The runtime does not install manual signal handlers or execute nested Effects.
+Package code does not run Effects at import time.
 
 State is held behind one scoped protocol-state service using Effect collections and synchronized updates. The state owner keeps raw OAuth secrets private, expires/prunes tokens using the Effect clock, and stores bounded observation ledgers with total and truncation metadata. Public snapshots contain synthetic protocol state only.
 

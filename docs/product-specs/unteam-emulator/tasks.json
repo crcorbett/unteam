@@ -1,6 +1,6 @@
 {
   "spec": "unteam-emulator",
-  "updated": "2026-08-10",
+  "updated": "2026-08-20",
   "tasks": [
     {
       "id": "UNTEAM-001",
@@ -64,6 +64,31 @@
         "docs/proof/unteam-emulator/pollsor-adapter-verification.receipt.json",
         "Pollsor packages/teams-test-harness/src/server.layer.ts",
         "Pollsor bun run test:teams-server"
+      ]
+    },
+    {
+      "id": "UNTEAM-008",
+      "title": "Provide the standalone JSON scenario and versioned readiness process contract",
+      "status": "in_progress",
+      "owner": "apps/cli with packages/emulator-bun schemas",
+      "acceptance": [
+        "Upgrade the exact Effect package family to beta.107 and use only APIs proven by the installed sources.",
+        "Require `--scenario <json-file-path>` and decode JSON with `effect/unstable/cli` plus the canonical `ServerScenarioV1` before listener acquisition; reject malformed, unknown-version, excess-property, missing-file, and invalid scenario input.",
+        "Run one `Effect.scoped` CLI program with `BunRuntime.runMain`, with no manual signal listeners, nested `Effect.runPromise`, raw Bun file access, or raw JSON parsing.",
+        "Schema-encode exactly one bounded `unteam.ready.v1` stdout line after scenario-ready listener acquisition; send bounded safe diagnostics to stderr and expose no secret, token, private key, path, or raw environment value.",
+        "Prove help and invalid startup, live readiness, HTTP snapshot, SIGTERM interruption, exact listener closure, secret-negative output, and a second fresh process with empty state."
+      ],
+      "verification": [
+        "bun --filter unteam test",
+        "bun run check-types",
+        "bun run build",
+        "bun run docs:check",
+        "bun run verification"
+      ],
+      "evidence": [
+        "apps/cli/src",
+        "apps/cli/test",
+        "docs/proof/unteam-emulator/standalone-process.receipt.json"
       ]
     }
   ]

@@ -5,6 +5,7 @@ dist/
 coverage/
 artifacts/*.tgz
 artifacts/*.tar.gz
+artifacts/unteam
 proof/receipts/*.local.json
 *.log
 .DS_Store

@@ -38,5 +38,5 @@ export const ServerScenarioV1 = Schema.Struct({
   signingKeys: Schema.Array(SigningKeySpec).check(Schema.isMinLength(1), Schema.isMaxLength(16)),
   observationCapacity: PositiveInt.check(Schema.isLessThanOrEqualTo(128)),
   initialTimeMillis: NonNegativeInt,
-});
+}).annotate({ parseOptions: { onExcessProperty: "error" } });
 export type ServerScenarioV1 = Schema.Schema.Type<typeof ServerScenarioV1>;

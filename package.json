@@ -8,9 +8,9 @@
     ],
     "catalogs": {
       "effect": {
-        "effect": "4.0.0-beta.100",
-        "@effect/platform-bun": "4.0.0-beta.100",
-        "@effect/vitest": "4.0.0-beta.100"
+        "effect": "4.0.0-beta.107",
+        "@effect/platform-bun": "4.0.0-beta.107",
+        "@effect/vitest": "4.0.0-beta.107"
       },
       "typescript": {
         "typescript": "7.0.2"
@@ -28,6 +28,7 @@
     "check-types": "turbo run check-types",
     "test": "turbo run test",
     "build": "turbo run build",
+    "build:executable": "bun build --compile --conditions=@unteam/source apps/cli/src/main.ts --outfile artifacts/unteam",
     "knip": "knip --no-config-hints",
     "knip:production": "knip --production --config knip.production.ts --strict --no-config-hints",
     "test:exports": "python3 scripts/validate_packages.py .",
@@ -35,7 +36,7 @@
     "validate:governance": "python3 tools/governance/validate.py .",
     "docs:check": "python3 tools/governance/validate.py .",
     "test:packed": "bun run scripts/packed-artifact-proof.ts",
-    "verification": "bun run format:check && bun run lint && bun run check-types && bun run knip && bun run knip:production && bun run test && bun run build && bun run test:exports && bun run validate:repository && bun run validate:governance && bun run test:packed"
+    "verification": "bun run format:check && bun run lint && bun run check-types && bun run knip && bun run knip:production && bun run test && bun run build && bun run build:executable && bun run test:exports && bun run validate:repository && bun run validate:governance && bun run test:packed"
   },
   "devDependencies": {
     "@types/bun": "1.3.14",
@@ -46,7 +47,7 @@
     "typescript": "catalog:typescript"
   },
   "overrides": {
-    "@effect/platform-node-shared": "4.0.0-beta.100"
+    "@effect/platform-node-shared": "4.0.0-beta.107"
   },
   "engines": {
     "bun": ">=1.3.14"

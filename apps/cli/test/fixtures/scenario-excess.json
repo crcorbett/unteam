@@ -1,0 +1,19 @@
+{
+  "scenarioVersion": "scenario.v1",
+  "name": "must-fail-before-listener",
+  "profile": {
+    "protocol": "bot-connector",
+    "revision": "v3",
+    "capabilities": []
+  },
+  "bot": {
+    "botAppId": "33333333-3333-4333-8333-333333333333",
+    "clientSecret": "must-not-appear",
+    "scope": "https://api.botframework.com/.default"
+  },
+  "connections": [],
+  "signingKeys": [],
+  "observationCapacity": 32,
+  "initialTimeMillis": 1700000000000,
+  "unexpected": true
+}

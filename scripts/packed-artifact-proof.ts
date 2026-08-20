@@ -106,10 +106,10 @@ try {
         private: true,
         type: "module",
         dependencies: {
-          "@effect/platform-bun": "4.0.0-beta.100",
+          "@effect/platform-bun": "4.0.0-beta.107",
           "@unteam/emulator-bun": `file:${bunTarball}`,
           "@unteam/emulator-core": `file:${coreTarball}`,
-          effect: "4.0.0-beta.100",
+          effect: "4.0.0-beta.107",
         },
         overrides: {
           "@unteam/emulator-core": `file:${coreTarball}`,

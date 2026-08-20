@@ -1,34 +1,56 @@
-import { Deferred, Effect } from "effect";
+import { makeTeamsEmulatorServerFromPaths, type ServerScenarioV1 } from "@unteam/emulator-bun";
+import { Effect, Schema, Stdio, Stream } from "effect";
 
-import { makeTeamsEmulatorServer } from "@unteam/emulator-bun";
-import { type ScenarioV1 } from "@unteam/emulator-core";
-import { exampleScenario } from "@unteam/emulator-core/fixtures";
+import { UnteamDiagnosticV1, UnteamLoopbackUrl, UnteamReadyV1 } from "./schemas";
 
-import type { CliConfig } from "./config";
+const encodeReadiness = Schema.encodeEffect(Schema.fromJsonString(UnteamReadyV1));
+const encodeDiagnostic = Schema.encodeEffect(Schema.fromJsonString(UnteamDiagnosticV1));
 
-export const runRuntime = (config: CliConfig, scenario: ScenarioV1 = exampleScenario) =>
-  Effect.scoped(
-    Effect.gen(function* () {
-      const server = yield* makeTeamsEmulatorServer(scenario);
-      yield* Effect.logInfo({
-        event: "unteam.started",
-        name: config.name ?? "unteam",
-        origin: server.origin.href,
+const writeLine = (line: string, output: ReturnType<Stdio.Stdio["stdout"]>) =>
+  Stream.make(`${line}\n`).pipe(Stream.run(output));
+
+export const emitDiagnostic = (event: UnteamDiagnosticV1["event"]) =>
+  Effect.gen(function* () {
+    const stdio = yield* Stdio.Stdio;
+    const line = yield* encodeDiagnostic(
+      UnteamDiagnosticV1.make({
+        diagnosticVersion: "unteam.diagnostic.v1",
+        event,
         synthetic: true,
-      });
-      const stopped = yield* Deferred.make<void>();
-      const signalHandler = () => {
-        void Effect.runPromise(Deferred.succeed(stopped, undefined));
-      };
-      process.once("SIGINT", signalHandler);
-      process.once("SIGTERM", signalHandler);
-      yield* Effect.acquireRelease(Effect.void, () =>
-        Effect.sync(() => {
-          process.removeListener("SIGINT", signalHandler);
-          process.removeListener("SIGTERM", signalHandler);
-        }),
-      );
-      yield* Deferred.await(stopped);
-      return server.origin.href;
-    }),
-  );
+      }),
+    );
+    yield* writeLine(line, stdio.stderr());
+  });
+
+export const runRuntime = (scenario: ServerScenarioV1) =>
+  Effect.gen(function* () {
+    const server = yield* makeTeamsEmulatorServerFromPaths(scenario);
+    const snapshot = yield* server.emulator.snapshot;
+    const decodeLoopbackUrl = Schema.decodeUnknownEffect(UnteamLoopbackUrl);
+    const origin = yield* decodeLoopbackUrl(server.origin.href);
+    const connections = yield* Effect.forEach(snapshot.connections, (connection) =>
+      decodeLoopbackUrl(connection.serviceUrl.href).pipe(
+        Effect.map((serviceUrl) => ({ connectionId: connection.connectionId, serviceUrl })),
+      ),
+    );
+    const readiness = UnteamReadyV1.make({
+      readinessVersion: "unteam.ready.v1",
+      synthetic: true,
+      origin,
+      issuerUrl: origin,
+      openIdMetadataUrl: yield* decodeLoopbackUrl(
+        new URL("/.well-known/openidconfiguration", server.origin).href,
+      ),
+      jwkSetUrl: yield* decodeLoopbackUrl(new URL("/.well-known/keys", server.origin).href),
+      oauthTokenUrl: yield* decodeLoopbackUrl(new URL("/oauth2/v2.0/token", server.origin).href),
+      controlBaseUrl: yield* decodeLoopbackUrl(new URL("/control/", server.origin).href),
+      botAppId: snapshot.botAppId,
+      connectorScope: scenario.bot.scope,
+      connections,
+    });
+    const line = yield* encodeReadiness(readiness);
+    const stdio = yield* Stdio.Stdio;
+    yield* writeLine(line, stdio.stdout());
+    yield* emitDiagnostic("started");
+    return yield* Effect.never;
+  });

@@ -31,10 +31,23 @@ Use `@unteam/emulator-core/fixtures` for bounded scenario fixtures and `@unteam/
 
 ```sh
 bunx unteam --help
-bunx unteam --config ./unteam.config.json
+bunx unteam --scenario ./unteam.scenario.json
 ```
 
-The CLI is a local harness host, not a production service. It binds loopback only and finalizes the server on signal or scope exit.
+The required JSON file is decoded with the public `ServerScenarioV1` Schema.
+After binding loopback on an ephemeral port, the CLI writes one
+`unteam.ready.v1` JSON line to stdout. The line contains safe URLs and resolved
+service URLs, but no client secret, token, private key, or local path.
+
+For a local standalone executable:
+
+```sh
+bun run build:executable
+./artifacts/unteam --scenario ./unteam.scenario.json
+```
+
+The CLI is a local harness host, not a production service. `BunRuntime.runMain`
+owns interruption and the outer Effect Scope finalizes the server.
 
 ## Supported surface and claim ceiling
 

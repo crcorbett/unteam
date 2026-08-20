@@ -15,9 +15,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check-types": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "bun run --cwd ../.. build:executable && bunx --bun vitest run"
   },
   "dependencies": {
+    "@effect/platform-bun": "catalog:effect",
     "@unteam/emulator-bun": "workspace:*",
     "@unteam/emulator-core": "workspace:*",
     "effect": "catalog:effect"

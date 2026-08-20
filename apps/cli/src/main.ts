@@ -1,26 +1,29 @@
-import { Effect } from "effect";
+import { BunRuntime, BunServices } from "@effect/platform-bun";
+import { Data, Effect } from "effect";
+import { Command } from "effect/unstable/cli";
 
-import { parseArguments, loadConfig } from "./config";
-import { runRuntime } from "./runtime";
+import { scenarioFlag } from "./config";
+import { emitDiagnostic, runRuntime } from "./runtime";
 
-const help = `unteam - synthetic local Bot Connector emulator
+class UnteamCliError extends Data.TaggedError("UnteamCliError")<{
+  readonly code: "startup-failed";
+}> {}
 
-Usage:
-  unteam [--config path]
+const command = Command.make("unteam", { scenario: scenarioFlag }, ({ scenario }) =>
+  runRuntime(scenario),
+).pipe(
+  Command.withDescription(
+    "Run the unofficial synthetic Bot Connector emulator on an ephemeral loopback port.",
+  ),
+);
 
-The emulator is unofficial, synthetic, loopback-only, and does not contact Microsoft services.
-`;
-
-const program = Effect.gen(function* () {
-  const arguments_ = yield* parseArguments(Bun.argv.slice(2));
-  if (arguments_.help) {
-    yield* Effect.logInfo(help);
-    return;
-  }
-  const config = yield* loadConfig(arguments_);
-  yield* runRuntime(config);
-});
-
-Effect.runPromise(program).catch(() => {
-  process.exitCode = 1;
-});
+Command.run(command, { version: "0.2.0", renderErrors: false }).pipe(
+  Effect.scoped,
+  Effect.catchCause(() =>
+    emitDiagnostic("startup-failed").pipe(
+      Effect.andThen(Effect.fail(new UnteamCliError({ code: "startup-failed" }))),
+    ),
+  ),
+  Effect.provide(BunServices.layer),
+  BunRuntime.runMain({ disableErrorReporting: true }),
+);

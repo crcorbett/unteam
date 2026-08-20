@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-10",
+  "updated": "2026-08-20",
   "journeys": [
     {
       "id": "CJ-001",
@@ -31,6 +31,33 @@
       }
     },
     {
+      "id": "CJ-002",
+      "name": "standalone JSON scenario process lifecycle",
+      "steps": [
+        "build the local standalone executable",
+        "start it with one JSON ServerScenarioV1 file",
+        "decode the one unteam.ready.v1 stdout line",
+        "read the external HTTP snapshot and touch the JWK route",
+        "send SIGTERM and observe child exit",
+        "prove the exact origin rejects a fresh TCP connection",
+        "start a second process and prove its snapshot is empty"
+      ],
+      "oracle": {
+        "must": [
+          "malformed, wrong-version, excess-property, and missing-file inputs emit no readiness record",
+          "readiness contains only loopback URLs and no secret or local path",
+          "the child process and HTTP listener are distinct external resources",
+          "the second process has zero tokens, seen activities, JWK requests, and Connector transcripts"
+        ],
+        "must_not": [
+          "use a Pollsor-specific scenario or import Pollsor state",
+          "install manual signal handlers or a nested Effect runtime",
+          "treat a help document or stderr diagnostic as readiness",
+          "claim Microsoft, hosted, provider, or production behavior"
+        ]
+      }
+    },
+    {
       "id": "FG-001",
       "name": "false-green oracle",
       "description": "A test is false-green if it proves only an in-process fake or an HTTP 200 while skipping the real loopback boundary.",
@@ -40,7 +67,8 @@
         "the caller ingress is a second real loopback listener",
         "the received body is decoded with ConnectorActivity",
         "the listener-finalization probe runs after the outer Scope closes",
-        "the packed-artifact consumer imports the package tarballs rather than workspace source"
+        "the packed-artifact consumer imports the package tarballs rather than workspace source",
+        "the standalone-process test executes the compiled artifact rather than calling the server Layer in-process"
       ]
     }
   ]
