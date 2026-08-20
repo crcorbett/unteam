@@ -69,7 +69,7 @@
     {
       "id": "UNTEAM-008",
       "title": "Provide the standalone JSON scenario and versioned readiness process contract",
-      "status": "in_progress",
+      "status": "complete",
       "owner": "apps/cli with packages/emulator-bun schemas",
       "acceptance": [
         "Upgrade the exact Effect package family to beta.107 and use only APIs proven by the installed sources.",
@@ -88,6 +88,7 @@
       "evidence": [
         "apps/cli/src",
         "apps/cli/test",
+        "artifacts/unteam (ignored local build product)",
         "docs/proof/unteam-emulator/standalone-process.receipt.json"
       ]
     }

@@ -1,0 +1,54 @@
+{
+  "receiptVersion": "standalone-process.v1",
+  "updated": "2026-08-20",
+  "status": "passed",
+  "branch": "codex/standalone-scenario-cli",
+  "targetCommit": "3f37c4c408af9198b6e315fdb9edce148aaa4385",
+  "effectVersion": "4.0.0-beta.107",
+  "commands": [
+    {
+      "command": "bun run verification",
+      "status": "passed",
+      "result": "format, lint, types, dead-code checks, package tests, builds, executable build, exports, repository governance, and packed-consumer proof passed"
+    },
+    {
+      "command": "bun --filter unteam test",
+      "status": "passed",
+      "result": "one test file and three tests passed against the compiled executable with real loopback HTTP and process resources"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "artifacts/unteam",
+      "sha256": "94a794c682e467dd4328ecef866b5d356167fc4e488160f4964082bb4b8253a6",
+      "tracked": false
+    },
+    {
+      "path": "artifacts/unteam-emulator-core-0.2.0.tgz",
+      "sha256": "e743c13acb75173785f4080d268542aca2231773379899a1e24580dfd8b5e970",
+      "tracked": false
+    },
+    {
+      "path": "artifacts/unteam-emulator-bun-0.2.0.tgz",
+      "sha256": "f3702eabde39ff17b99bf8aaaa91162705dd0049a06eeb407dee8d261b4daedc",
+      "tracked": false
+    }
+  ],
+  "proved": [
+    "the CLI decodes one required ServerScenarioV1 JSON file before listener acquisition",
+    "the compiled executable emits one schema-decoded unteam.ready.v1 record after acquisition",
+    "the discovered loopback HTTP snapshot and JWK routes respond",
+    "SIGTERM exits the child and closes the exact listener",
+    "a second process starts with empty state",
+    "missing, malformed, wrong-version, and excess-property scenario inputs emit no readiness record",
+    "readiness and diagnostics exclude scenario paths and the synthetic client secret"
+  ],
+  "limitations": [
+    "Effect beta.107's published Schema.d.ts refers to SchemaAST.Sentinel, which its published SchemaAST.d.ts omits; the clean packed consumer therefore follows this repository's existing skipLibCheck policy while still typechecking and running public imports.",
+    "The executable and package tarballs are local ignored build products and were not published."
+  ],
+  "nonClaims": [
+    "No Microsoft, Entra, Teams, Graph, Bot Framework, hosted, deployed, provider, tenant, credential, release, or production behaviour was exercised or proved.",
+    "No npm publication, push, merge, deployment, credential creation, or external-state mutation occurred."
+  ]
+}

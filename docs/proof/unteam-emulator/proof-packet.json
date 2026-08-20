@@ -1,6 +1,6 @@
 {
   "packetVersion": "proof.v1",
-  "updated": "2026-08-13",
+  "updated": "2026-08-20",
   "repository": "unteam",
   "claims": [
     {
@@ -37,6 +37,16 @@
         "Pollsor packages/teams-test-harness/src/server.layer.ts",
         "Pollsor apps/web/test-runtime/teams-server.full-system.test.ts"
       ]
+    },
+    {
+      "id": "CLAIM-006",
+      "claim": "the local compiled unteam CLI owns a scoped loopback server process, accepts one exact JSON scenario, emits versioned readiness, and finalizes on SIGTERM",
+      "status": "complete",
+      "evidence": [
+        "standalone-process.receipt.json",
+        "apps/cli/test/config.test.ts",
+        "docs/critical-journeys/journeys.json"
+      ]
     }
   ],
   "nonClaims": [
@@ -51,6 +61,7 @@
     "no client secrets",
     "no private JWK members",
     "no local absolute paths",
-    "no Pollsor-only provider state"
+    "no Pollsor-only provider state",
+    "no scenario file path or synthetic Connector client secret in standalone readiness or diagnostics"
   ]
 }

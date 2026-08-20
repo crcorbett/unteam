@@ -25,6 +25,7 @@ Read this router first. Stable boundaries live in `docs/architecture`, repeatabl
 
 - [`proof/unteam-emulator/proof-packet.json`](proof/unteam-emulator/proof-packet.json) — dated claim/evidence packet.
 - [`proof/unteam-emulator/verification.receipt.json`](proof/unteam-emulator/verification.receipt.json) — repository verification receipt.
+- [`proof/unteam-emulator/standalone-process.receipt.json`](proof/unteam-emulator/standalone-process.receipt.json) — standalone JSON scenario, readiness, HTTP, and process-finalization receipt.
 - [`proof/unteam-emulator/impact-ledger.md`](proof/unteam-emulator/impact-ledger.md) — affected owners, compatibility impact, and non-impacts.
 
 Do not copy Pollsor provider state into this repository. Pollsor remains the source/current-consumer evidence for its adapter and full-system journey.
