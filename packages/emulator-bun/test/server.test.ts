@@ -12,7 +12,7 @@ import {
 } from "effect/unstable/http";
 
 import { makeTeamsEmulatorServer, makeTeamsEmulatorServerFromPaths } from "../src/server.layer";
-import { ServerScenarioV1 } from "../src/server.schemas";
+import { ServerPort, ServerScenarioV1, UnteamReadyV2 } from "../src/server.schemas";
 import { exampleScenario } from "@unteam/emulator-core/fixtures";
 import {
   AdvanceSimulationTime,
@@ -329,13 +329,30 @@ describe("@unteam/emulator-bun server", () => {
             servicePath: ServicePath.make(`/connector/${item.connectionId}/`),
           })),
         });
-        const setup = yield* makeTeamsEmulatorServerFromPaths(pathScenario);
+        const port = yield* Effect.scoped(
+          Effect.gen(function* () {
+            const reservation = yield* BunHttpServer.make({ hostname: "127.0.0.1", port: 0 });
+            if (reservation.address._tag !== "TcpAddress") {
+              return yield* Effect.die("fixed-port test requires TCP");
+            }
+            return ServerPort.make(reservation.address.port);
+          }),
+        );
+        const setup = yield* makeTeamsEmulatorServerFromPaths(pathScenario, { port });
         const snapshot = yield* setup.emulator.snapshot;
+        const client = yield* HttpClient.HttpClient;
+        const readinessResponse = yield* client.execute(
+          HttpClientRequest.get(new URL("/ready", setup.origin)),
+        );
+        const readiness = yield* decodeBody(UnteamReadyV2, readinessResponse);
+        assert.strictEqual(Number(setup.origin.port), port);
+        assert.strictEqual(readiness.scenarioName, pathScenario.name);
+        assert.strictEqual(readiness.origin.href, setup.origin.href);
         assert.deepEqual(
           snapshot.connections.map((item) => item.serviceUrl.origin),
           scenario.connections.map(() => setup.origin.origin),
         );
       }),
-    ),
+    ).pipe(Effect.provide(FetchHttpClient.layer)),
   );
 });

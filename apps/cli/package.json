@@ -20,7 +20,6 @@
   "dependencies": {
     "@effect/platform-bun": "catalog:effect",
     "@unteam/emulator-bun": "workspace:*",
-    "@unteam/emulator-core": "workspace:*",
     "effect": "catalog:effect"
   },
   "devDependencies": {

@@ -35,8 +35,8 @@
       "name": "standalone JSON scenario process lifecycle",
       "steps": [
         "build the local standalone executable",
-        "start it with one JSON ServerScenarioV1 file",
-        "decode the one unteam.ready.v1 stdout line",
+        "start it with one JSON ServerScenarioV1 file and one explicit loopback port",
+        "decode the one unteam.ready.v2 stdout line and the identical GET /ready response",
         "read the external HTTP snapshot and touch the JWK route",
         "send SIGTERM and observe child exit",
         "prove the exact origin rejects a fresh TCP connection",
@@ -44,7 +44,7 @@
       ],
       "oracle": {
         "must": [
-          "malformed, wrong-version, excess-property, and missing-file inputs emit no readiness record",
+          "malformed, wrong-version, excess-property, missing-file, invalid-port, and occupied-port inputs emit no readiness record",
           "readiness contains only loopback URLs and no secret or local path",
           "the child process and HTTP listener are distinct external resources",
           "the second process has zero tokens, seen activities, JWK requests, and Connector transcripts"
@@ -68,7 +68,8 @@
         "the received body is decoded with ConnectorActivity",
         "the listener-finalization probe runs after the outer Scope closes",
         "the packed-artifact consumer imports the package tarballs rather than workspace source",
-        "the standalone-process test executes the compiled artifact rather than calling the server Layer in-process"
+        "the standalone-process test executes the compiled artifact rather than calling the server Layer in-process",
+        "an external consumer can be configured with only the loopback origin and GET /ready"
       ]
     }
   ]

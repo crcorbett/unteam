@@ -91,6 +91,32 @@
         "artifacts/unteam (ignored local build product)",
         "docs/proof/unteam-emulator/standalone-process.receipt.json"
       ]
+    },
+    {
+      "id": "UNTEAM-009",
+      "title": "Expose a configured standalone listener and HTTP readiness contract",
+      "status": "in_progress",
+      "owner": "apps/cli and packages/emulator-bun",
+      "acceptance": [
+        "Require an Effect CLI `--port` value decoded by a branded bounded Schema and bind only 127.0.0.1; keep one BunRuntime.runMain application and one scoped BunHttpServer finalizer.",
+        "Schema-encode `UnteamReadyV2` with the bounded scenario name after complete scenario construction, emit it once on stdout, and serve the identical secret-negative record from GET /ready.",
+        "Keep the JSON scenario file as the only scenario input. Do not add Pollsor knowledge, consumer callbacks, a remote-host mode, a second runtime, raw argument parsing, or manual signal ownership.",
+        "Prove invalid/missing ports, fixed-port startup, HTTP readiness decode, wrong-version rejection, scenario identity, occupied-port failure, signal cleanup, and a fresh restart on the same port."
+      ],
+      "verification": [
+        "bun --filter unteam test",
+        "bun --filter @unteam/emulator-bun test",
+        "bun run check-types",
+        "bun run docs:check",
+        "bun run verification"
+      ],
+      "evidence": [
+        "apps/cli/src",
+        "apps/cli/test",
+        "packages/emulator-bun/src",
+        "packages/emulator-bun/test",
+        "docs/runbooks/local-emulator.md"
+      ]
     }
   ]
 }

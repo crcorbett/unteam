@@ -1,9 +1,13 @@
-import { makeTeamsEmulatorServerFromPaths, type ServerScenarioV1 } from "@unteam/emulator-bun";
+import {
+  makeTeamsEmulatorServerFromPaths,
+  type ServerPort,
+  type ServerScenarioV1,
+} from "@unteam/emulator-bun";
 import { Effect, Schema, Stdio, Stream } from "effect";
 
-import { UnteamDiagnosticV1, UnteamLoopbackUrl, UnteamReadyV1 } from "./schemas";
+import { UnteamDiagnosticV1, UnteamReadyV2 } from "./schemas";
 
-const encodeReadiness = Schema.encodeEffect(Schema.fromJsonString(UnteamReadyV1));
+const encodeReadiness = Schema.encodeEffect(Schema.fromJsonString(UnteamReadyV2));
 const encodeDiagnostic = Schema.encodeEffect(Schema.fromJsonString(UnteamDiagnosticV1));
 
 const writeLine = (line: string, output: ReturnType<Stdio.Stdio["stdout"]>) =>
@@ -22,33 +26,10 @@ export const emitDiagnostic = (event: UnteamDiagnosticV1["event"]) =>
     yield* writeLine(line, stdio.stderr());
   });
 
-export const runRuntime = (scenario: ServerScenarioV1) =>
+export const runRuntime = (scenario: ServerScenarioV1, port: ServerPort) =>
   Effect.gen(function* () {
-    const server = yield* makeTeamsEmulatorServerFromPaths(scenario);
-    const snapshot = yield* server.emulator.snapshot;
-    const decodeLoopbackUrl = Schema.decodeUnknownEffect(UnteamLoopbackUrl);
-    const origin = yield* decodeLoopbackUrl(server.origin.href);
-    const connections = yield* Effect.forEach(snapshot.connections, (connection) =>
-      decodeLoopbackUrl(connection.serviceUrl.href).pipe(
-        Effect.map((serviceUrl) => ({ connectionId: connection.connectionId, serviceUrl })),
-      ),
-    );
-    const readiness = UnteamReadyV1.make({
-      readinessVersion: "unteam.ready.v1",
-      synthetic: true,
-      origin,
-      issuerUrl: origin,
-      openIdMetadataUrl: yield* decodeLoopbackUrl(
-        new URL("/.well-known/openidconfiguration", server.origin).href,
-      ),
-      jwkSetUrl: yield* decodeLoopbackUrl(new URL("/.well-known/keys", server.origin).href),
-      oauthTokenUrl: yield* decodeLoopbackUrl(new URL("/oauth2/v2.0/token", server.origin).href),
-      controlBaseUrl: yield* decodeLoopbackUrl(new URL("/control/", server.origin).href),
-      botAppId: snapshot.botAppId,
-      connectorScope: scenario.bot.scope,
-      connections,
-    });
-    const line = yield* encodeReadiness(readiness);
+    const server = yield* makeTeamsEmulatorServerFromPaths(scenario, { port });
+    const line = yield* encodeReadiness(server.readiness);
     const stdio = yield* Stdio.Stdio;
     yield* writeLine(line, stdio.stdout());
     yield* emitDiagnostic("started");

@@ -16,8 +16,9 @@ The repository does not introduce a generic client package. The protocol client 
 Safe delivery authorities are `http://127.0.0.1`, `http://localhost`, and `http://[::1]` without credentials or fragments. HTTPS, public hosts, userinfo, and fragments are rejected by the public delivery service.
 
 The standalone CLI has a separate process boundary. It decodes one
-`ServerScenarioV1` JSON file before acquiring the HTTP listener, then
-Schema-encodes one `unteam.ready.v1` line after acquisition. Consumers decode
-that line to discover the loopback HTTP URLs. They do not import the emulator's
-server package or infer readiness from help text, diagnostics, timing, or an
-open process handle.
+`ServerScenarioV1` JSON file and one bounded port before acquiring the HTTP
+listener, then Schema-encodes `UnteamReadyV2` after acquisition. The CLI emits
+one stdout copy and serves the same record from `GET /ready`. A separately
+running consumer may be configured with only the loopback origin. It does not
+import the emulator package or infer readiness from help text, diagnostics,
+timing, or an open process handle.

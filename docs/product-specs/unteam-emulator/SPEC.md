@@ -15,13 +15,15 @@ Create a small public strict-Effect monorepo that extracts only Pollsor's synthe
 - Test substitution means deterministic replacement of one service contract; the composed emulator is a separate external-system simulation.
 - The emulator accepts only safe loopback delivery authorities.
 - Scope owns server/clock/key lifetime; reset is effectful and deterministic.
-- The standalone CLI requires one `--scenario <json-file-path>` flag, reads the
+- The standalone CLI requires `--scenario <json-file-path>` and `--port
+<loopback-port>` flags, reads the
   JSON through Effect CLI's file-Schema boundary, and decodes it with the
   canonical Bun-owned `ServerScenarioV1` before acquiring a listener.
 - The CLI owns one `BunRuntime.runMain` execution. Process interruption closes
   the outer Scope, which finalizes the Bun server; no manual signal handler or
   nested Effect runtime is allowed.
-- Successful startup emits exactly one `unteam.ready.v1` JSON line to stdout.
+- Successful startup emits exactly one `unteam.ready.v2` JSON line to stdout
+  and serves the same record from `GET /ready`.
   Bounded diagnostics use stderr, and neither stream may expose secrets,
   tokens, private key material, raw environment values, or workstation paths.
 
@@ -34,7 +36,7 @@ The current slice includes synthetic OpenID/JWK, OAuth client credentials, Conne
 The CLI command is:
 
 ```text
-unteam --scenario <json-file-path>
+unteam --scenario <json-file-path> --port <loopback-port>
 ```
 
 The file must contain the encoded `ServerScenarioV1` shape. Effect CLI parses
@@ -43,14 +45,15 @@ Missing files, malformed JSON, unsupported scenario versions, invalid paths,
 invalid identities, invalid bounds, and invalid secret values fail before
 listener acquisition and before readiness output.
 
-After the scoped server has bound `127.0.0.1` on an ephemeral port and the
+After the scoped server has bound `127.0.0.1` on the requested port and the
 scenario has been constructed, the CLI Schema-encodes one newline-delimited
 readiness record:
 
 ```text
-UnteamReadyV1
-  readinessVersion: "unteam.ready.v1"
+UnteamReadyV2
+  readinessVersion: "unteam.ready.v2"
   synthetic: true
+  scenarioName
   origin
   issuerUrl
   openIdMetadataUrl
@@ -62,10 +65,29 @@ UnteamReadyV1
   connections[]: connectionId + resolved serviceUrl
 ```
 
+`GET /ready` returns this same exact Schema-encoded record. A client can
+therefore be configured with only the origin and can fail closed when the
+server is absent, reports the wrong version, or runs the wrong scenario.
+
 All URLs are loopback HTTP. Readiness omits the scenario path, client secret,
 signing material, bearer values, raw environment, and diagnostics. The CLI then
 waits inside the same Scope until `BunRuntime.runMain` interruption finalizes
 the server.
+
+## Standalone connection successor — 2026-08-20
+
+The earlier `unteam.ready.v1` stdout contract remains historical evidence for
+UNTEAM-008. The current contract is `unteam.ready.v2`: it adds the bounded
+scenario name, requires an explicit listener port, and exposes the readiness
+record over HTTP. This lets a consumer start unteam independently and supply
+only `http://127.0.0.1:<port>/`. The consumer does not import unteam packages,
+read unteam stdout, pass a process handle, or own the emulator finalizer.
+
+Loopback is required for the current local synthetic claim. It keeps scenario
+data and synthetic credentials on the same machine and prevents an accidental
+public listener. A future remotely hosted emulator would need separate
+authentication, transport-security, exposure, lifecycle and evidence work; it
+is not implied by this SPEC.
 
 ## Non-goals and claim ceiling
 

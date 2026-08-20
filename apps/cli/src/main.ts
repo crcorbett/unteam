@@ -2,18 +2,18 @@ import { BunRuntime, BunServices } from "@effect/platform-bun";
 import { Data, Effect } from "effect";
 import { Command } from "effect/unstable/cli";
 
-import { scenarioFlag } from "./config";
+import { portFlag, scenarioFlag } from "./config";
 import { emitDiagnostic, runRuntime } from "./runtime";
 
 class UnteamCliError extends Data.TaggedError("UnteamCliError")<{
   readonly code: "startup-failed";
 }> {}
 
-const command = Command.make("unteam", { scenario: scenarioFlag }, ({ scenario }) =>
-  runRuntime(scenario),
+const command = Command.make("unteam", { port: portFlag, scenario: scenarioFlag }, ({ port, scenario }) =>
+  runRuntime(scenario, port),
 ).pipe(
   Command.withDescription(
-    "Run the unofficial synthetic Bot Connector emulator on an ephemeral loopback port.",
+    "Run the unofficial synthetic Bot Connector emulator on a configured loopback port.",
   ),
 );
 

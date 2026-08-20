@@ -7,8 +7,10 @@
 - Scenario JSON is fully read and Schema-decoded before the listener is
   acquired. Invalid startup emits no readiness record.
 - Readiness is emitted only after the listener and scenario state are ready.
-  It is one bounded `unteam.ready.v1` stdout line and is not a server finalizer
-  or a second lifecycle owner.
+  It is one bounded `unteam.ready.v2` stdout line and the identical `GET
+/ready` response. Neither is a server finalizer or a second lifecycle owner.
+- The CLI port is explicit and Schema-decoded. A consumer may connect by
+  configured origin, but it never owns or finalizes the unteam process.
 - `BunHttpServer.make` is the listener boundary. Its finalizer stops the listener; no raw Bun or Node lifecycle is retained.
 - The TestClock is created in the outer emulator Layer and is read effectfully. It is never acquired inside an already-finalized inner Scope.
 - `advanceTime` accepts a positive `Duration` schema value. Live and test clocks share the same service contract.

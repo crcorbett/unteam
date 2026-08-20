@@ -31,19 +31,20 @@ Use `@unteam/emulator-core/fixtures` for bounded scenario fixtures and `@unteam/
 
 ```sh
 bunx unteam --help
-bunx unteam --scenario ./unteam.scenario.json
+bunx unteam --scenario ./unteam.scenario.json --port 4311
 ```
 
 The required JSON file is decoded with the public `ServerScenarioV1` Schema.
-After binding loopback on an ephemeral port, the CLI writes one
-`unteam.ready.v1` JSON line to stdout. The line contains safe URLs and resolved
-service URLs, but no client secret, token, private key, or local path.
+After binding `127.0.0.1` on the configured port, the CLI writes one
+`unteam.ready.v2` JSON line to stdout and serves the same record from
+`http://127.0.0.1:4311/ready`. It contains the scenario name, safe URLs and
+resolved service URLs, but no client secret, token, private key, or local path.
 
 For a local standalone executable:
 
 ```sh
 bun run build:executable
-./artifacts/unteam --scenario ./unteam.scenario.json
+./artifacts/unteam --scenario ./unteam.scenario.json --port 4311
 ```
 
 The CLI is a local harness host, not a production service. `BunRuntime.runMain`
