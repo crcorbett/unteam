@@ -4,8 +4,9 @@ This receipt covers UNTEAM-010 in the separate unteam worktree at
 `codex/unteam-client`, based on source revision
 `f63eca6da106792d69c59377c3c8d91ea3ff851c`. The verified source slice
 was committed locally as `cf795d68dbe0c2091ad62c52cf50cad376e06675`.
-The artifact checks below ran against that source tree before the commit; no
-published release is claimed.
+The additional shared wire re-exports needed by the consumer were committed
+as `dcd5351a489d8fd29e5f4e09bf263b0037d29eda`. The client artifact
+below was packed from that local branch; no published release is claimed.
 
 `@unteam/client@0.1.0` shares scenario/readiness wire Schemas with
 `@unteam/emulator-core@0.2.0`. Its runtime imports neither the Bun host nor
@@ -28,7 +29,7 @@ this receipt:
 | -------------------------------- | ------------------------------------------------------------------ |
 | `unteam-emulator-core-0.2.0.tgz` | `79084c1409cada39d607c91588d3a265970f30ce609fe8f7ff6a1a0b258fe17d` |
 | `unteam-emulator-bun-0.2.0.tgz`  | `fee17dc16e5e7ae2935341df77fe11df67a196942e832caea8127377aa61c542` |
-| `unteam-client-0.1.0.tgz`        | `79249c4b96b99c3844b39e008474306b38d04d9ed9aed4a24ccf06c908e453e7` |
+| `unteam-client-0.1.0.tgz`        | `ee424cad0c22a0302c005f2af08b35851776f06e1bbee17cf78dd74a036a5e30` |
 
 The CLI test first failed because its test imported the core package without
 a direct development dependency; this was corrected. The generated Bun
