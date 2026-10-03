@@ -3,6 +3,9 @@ import { Schema } from "effect";
 
 export {
   AdvanceSimulationTime,
+  ConnectionId,
+  ConnectorOutcome,
+  ConnectorRequestV1,
   ControlReceiptV1,
   DeliverActivity,
   DeliveryReceiptV1,
@@ -11,9 +14,11 @@ export {
   OpenIdDocumentV1,
   ResetControl,
   SelectSigningKey,
+  ServicePath,
   ServerScenarioV1,
   SetConnectorOutcome,
   SetInstallation,
+  SigningKeyId,
   UnteamLoopbackUrl,
   UnteamReadyV2,
 } from "@unteam/emulator-core/schemas";
