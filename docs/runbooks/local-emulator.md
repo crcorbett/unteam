@@ -8,7 +8,11 @@ bun run build
 bun run build:executable
 ```
 
+On macOS, this existing build command ad-hoc signs the generated local binary
+so the operating system can run it. It does not publish or notarise the binary.
+
 For a clean consumer, use the repository's packed-artifact proof; do not import `src` as a substitute for a package artifact.
+The proof packs core, Bun host, and the optional client independently. A consumer using `@unteam/client` needs its client and matching core artifacts, not an import of Bun host source.
 
 ## Standalone process lifecycle
 

@@ -1,6 +1,6 @@
 {
   "spec": "unteam-emulator",
-  "updated": "2026-08-20",
+  "updated": "2026-10-03",
   "tasks": [
     {
       "id": "UNTEAM-001",
@@ -117,6 +117,25 @@
         "packages/emulator-bun/test",
         "docs/runbooks/local-emulator.md",
         "docs/proof/unteam-emulator/configured-server.receipt.json"
+      ]
+    },
+    {
+      "id": "UNTEAM-010",
+      "title": "Extract a versioned local HTTP control client for separate consumers",
+      "status": "complete",
+      "owner": "packages/client with shared schemas in packages/emulator-core",
+      "acceptance": [
+        "Share the exact scenario and readiness wire Schemas without a client runtime dependency on the Bun host or Pollsor.",
+        "Provide one named Effect client service with live and deterministic test Layers; decode configuration, readiness, protocol probes, snapshots and control responses and encode all requests.",
+        "Fail closed on absent, wrong-version or mismatched local readiness, and return bounded typed errors without secret values.",
+        "Prove source checks, focused local server tests, clean packed-artifact consumption, and repository verification before declaring completion."
+      ],
+      "evidence": [
+        "packages/client/src",
+        "packages/client/test",
+        "scripts/packed-artifact-proof.ts",
+        "docs/architecture/http-boundary.md",
+        "docs/proof/unteam-emulator/client-extraction-2026-10-03.md"
       ]
     }
   ]

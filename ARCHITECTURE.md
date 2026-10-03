@@ -4,6 +4,8 @@
 
 `@unteam/emulator-bun` owns the scoped Effect Platform Bun HTTP server and the private loopback HTTP delivery adapter. It composes core Layers and exposes a stable local origin without exposing a raw server, client, socket, token, or key.
 
+`@unteam/client` owns the narrow, typed HTTP control boundary used by a separate local consumer. It shares versioned wire Schemas from core but has no Bun-host or Pollsor runtime dependency. Its live and test Layers expose the same named Effect service.
+
 `unteam` CLI owns its required JSON scenario-file boundary, versioned readiness,
 bounded diagnostics, and one `BunRuntime.runMain` application runtime. Effect
 CLI reads and Schema-decodes `ServerScenarioV1` before listener acquisition.

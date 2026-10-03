@@ -1,0 +1,58 @@
+{
+  "name": "@unteam/client",
+  "version": "0.1.0",
+  "description": "Typed Effect HTTP client for the local unteam emulator",
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./schemas": {
+      "@unteam/source": "./src/schemas.ts",
+      "types": "./dist/schemas.d.ts",
+      "default": "./dist/schemas.js"
+    },
+    "./errors": {
+      "@unteam/source": "./src/errors.ts",
+      "types": "./dist/errors.d.ts",
+      "default": "./dist/errors.js"
+    },
+    "./service": {
+      "@unteam/source": "./src/service.ts",
+      "types": "./dist/service.d.ts",
+      "default": "./dist/service.js"
+    },
+    "./live": {
+      "@unteam/source": "./src/live.layer.ts",
+      "types": "./dist/live.layer.d.ts",
+      "default": "./dist/live.layer.js"
+    },
+    "./test": {
+      "@unteam/source": "./src/test.layer.ts",
+      "types": "./dist/test.layer.d.ts",
+      "default": "./dist/test.layer.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "test": "bunx --bun vitest run"
+  },
+  "dependencies": {
+    "@unteam/emulator-core": "workspace:*",
+    "effect": "catalog:effect"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:effect",
+    "@unteam/emulator-bun": "workspace:*",
+    "typescript": "catalog:typescript",
+    "vitest": "catalog:testing"
+  }
+}

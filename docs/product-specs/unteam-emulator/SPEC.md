@@ -89,6 +89,26 @@ public listener. A future remotely hosted emulator would need separate
 authentication, transport-security, exposure, lifecycle and evidence work; it
 is not implied by this SPEC.
 
+## Reusable local client successor — 2026-10-03
+
+`@unteam/client` is a separate `0.1.0` package for test and development
+consumers that control a running local emulator. It shares the exact
+`ServerScenarioV1` and `UnteamReadyV2` wire Schemas with core, without
+depending on the Bun host or Pollsor. It provides one named Effect service,
+a live HTTP Layer, and a deterministic test Layer. The live Layer decodes a
+loopback origin from configuration and fails closed unless readiness reports
+the expected version and origin, OpenID points to the same JWK URL, JWKs
+decode, and a snapshot decodes. Every control request is Schema-encoded and
+every response is Schema-decoded; expected transport and protocol failures
+have a bounded typed error. No process launch, listener, Microsoft credential,
+or Pollsor workflow belongs in this package.
+
+This package is for synthetic local testing only. It is not a production
+Teams client and does not change the Microsoft/provider claim ceiling. Its
+packed artifact must install and run in a clean consumer together with the
+matching core artifact before Pollsor takes a pinned local copy. Publication
+and deployment remain separate future decisions.
+
 ## Non-goals and claim ceiling
 
 No Graph, Teams UI/catalog, production durability, tenant credentials, live Microsoft requests, proactive provider behavior, or `conversationUpdate` installation Activity is implemented. OpenID document availability and direct JWK retrieval are proven; discovery resolution by a client is not claimed. A successful local test is not Microsoft compatibility evidence.

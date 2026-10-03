@@ -8,7 +8,7 @@
 bun add @unteam/emulator-core @unteam/emulator-bun
 ```
 
-The packages are currently verified as local packed artifacts. npm publication is intentionally out of scope.
+The packages are currently verified as local packed artifacts. Add `@unteam/client` as well only when a separate test program needs typed HTTP controls for a running emulator. npm publication is intentionally out of scope.
 
 ## Programmatic use
 

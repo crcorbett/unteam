@@ -11,7 +11,7 @@ Ingress rules:
 5. Outbound Activity, JWK, OAuth, Connector, receipt, snapshot, and observation values are schema-encoded before response/body construction.
 6. The only unsafe JSON helper is used after schema encoding for the Effect Platform response/body adapter; encoding failure is converted to a defect because the typed invariant has already been established.
 
-The repository does not introduce a generic client package. The protocol client boundary is private to the core delivery service and is represented by Effect Platform `HttpClient`; a second emulator or consumer-owned client would be required before extracting a reusable wrapper.
+`@unteam/client` is a narrow consumer-side wrapper for this emulator's versioned local HTTP contract. It is not a general Teams or Microsoft client. Its live Layer reads a decoded loopback origin, checks `unteam.ready.v2` and the OpenID/JWK and snapshot responses, then exposes named, Schema-encoded controls. HTTP or decoding failures become a closed `UnteamClientError`; the test Layer replaces the same service without starting a listener. The client never imports the Bun host at runtime. The core delivery HTTP client remains private to the emulator and is a separate role.
 
 Safe delivery authorities are `http://127.0.0.1`, `http://localhost`, and `http://[::1]` without credentials or fragments. HTTPS, public hosts, userinfo, and fragments are rejected by the public delivery service.
 
@@ -20,5 +20,6 @@ The standalone CLI has a separate process boundary. It decodes one
 listener, then Schema-encodes `UnteamReadyV2` after acquisition. The CLI emits
 one stdout copy and serves the same record from `GET /ready`. A separately
 running consumer may be configured with only the loopback origin. It does not
-import the emulator package or infer readiness from help text, diagnostics,
-timing, or an open process handle.
+import the Bun host package or infer readiness from help text, diagnostics,
+timing, or an open process handle. A consumer may use the independent
+`@unteam/client` package for these checks and controls.

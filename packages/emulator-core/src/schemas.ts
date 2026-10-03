@@ -145,6 +145,65 @@ export const ScenarioV1 = Schema.Struct({
 });
 export type ScenarioV1 = Schema.Schema.Type<typeof ScenarioV1>;
 
+// Standalone-server wire values belong to core so the Bun host and HTTP client
+// share one versioned contract without depending on each other's runtime.
+export const UnteamLoopbackUrl = Schema.URLFromString.check(
+  Schema.makeFilter(
+    (value: URL) =>
+      value.protocol === "http:" &&
+      (value.hostname === "127.0.0.1" || value.hostname === "[::1]") &&
+      value.username.length === 0 &&
+      value.password.length === 0,
+    { description: "a loopback HTTP URL without user information" },
+  ),
+).pipe(Schema.brand("@unteam/emulator-bun/UnteamLoopbackUrl"));
+export type UnteamLoopbackUrl = typeof UnteamLoopbackUrl.Type;
+
+export const ServerConnectionSpec = Schema.Struct({
+  connectionId: ConnectionId,
+  tenantId: TenantId,
+  userId: UserId,
+  conversationId: ConversationId,
+  servicePath: ServicePath,
+  installation: InstallationState,
+  connectorOutcome: ConnectorOutcome,
+  signingKeyId: SigningKeyId,
+});
+export type ServerConnectionSpec = typeof ServerConnectionSpec.Type;
+
+export const ServerScenarioV1 = Schema.Struct({
+  scenarioVersion: Schema.Literal("scenario.v1"),
+  name: Text,
+  profile: BotConnectorProfile,
+  bot: BotAppSpec,
+  connections: Schema.Array(ServerConnectionSpec).check(Schema.isMinLength(1), Schema.isMaxLength(64)),
+  signingKeys: Schema.Array(SigningKeySpec).check(Schema.isMinLength(1), Schema.isMaxLength(16)),
+  observationCapacity: PositiveInt.check(Schema.isLessThanOrEqualTo(128)),
+  initialTimeMillis: NonNegativeInt,
+}).annotate({ parseOptions: { onExcessProperty: "error" } });
+export type ServerScenarioV1 = typeof ServerScenarioV1.Type;
+
+const UnteamReadyConnectionV2 = Schema.Struct({
+  connectionId: ConnectionId,
+  serviceUrl: UnteamLoopbackUrl,
+}).annotate({ parseOptions: { onExcessProperty: "error" } });
+
+export const UnteamReadyV2 = Schema.Struct({
+  readinessVersion: Schema.Literal("unteam.ready.v2"),
+  synthetic: Schema.Literal(true),
+  scenarioName: Text,
+  origin: UnteamLoopbackUrl,
+  issuerUrl: UnteamLoopbackUrl,
+  openIdMetadataUrl: UnteamLoopbackUrl,
+  jwkSetUrl: UnteamLoopbackUrl,
+  oauthTokenUrl: UnteamLoopbackUrl,
+  controlBaseUrl: UnteamLoopbackUrl,
+  botAppId: BotAppId,
+  connectorScope: Text,
+  connections: Schema.Array(UnteamReadyConnectionV2).check(Schema.isMinLength(1), Schema.isMaxLength(64)),
+}).annotate({ parseOptions: { onExcessProperty: "error" } });
+export type UnteamReadyV2 = typeof UnteamReadyV2.Type;
+
 export const ActivityDeliveryClaims = Schema.Struct({
   audience: Schema.optionalKey(BotAppId),
   tokenServiceUrl: Schema.optionalKey(ServiceUrl),

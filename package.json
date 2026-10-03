@@ -28,7 +28,7 @@
     "check-types": "turbo run check-types",
     "test": "turbo run test",
     "build": "turbo run build",
-    "build:executable": "bun build --compile --conditions=@unteam/source apps/cli/src/main.ts --outfile artifacts/unteam",
+    "build:executable": "bun build --compile --conditions=@unteam/source apps/cli/src/main.ts --outfile artifacts/unteam && if [ \"$(uname -s)\" = Darwin ]; then codesign --force --sign - artifacts/unteam; fi",
     "knip": "knip --no-config-hints",
     "knip:production": "knip --production --config knip.production.ts --strict --no-config-hints",
     "test:exports": "python3 scripts/validate_packages.py .",

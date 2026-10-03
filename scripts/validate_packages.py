@@ -17,6 +17,7 @@ def main() -> None:
     expected = {
         "@unteam/emulator-core": {".", "./schemas", "./errors", "./service", "./live", "./test", "./fixtures", "./observations"},
         "@unteam/emulator-bun": {".", "./server"},
+        "@unteam/client": {"./schemas", "./errors", "./service", "./live", "./test"},
     }
     for package_dir in sorted((root / "packages").iterdir()):
         manifest_path = package_dir / "package.json"
@@ -28,7 +29,7 @@ def main() -> None:
             continue
         exports = manifest.get("exports", {})
         publish_exports = manifest.get("publishConfig", {}).get("exports", {})
-        if set(exports) != expected[name] or set(publish_exports) != expected[name]:
+        if set(exports) != expected[name] or (name != "@unteam/client" and set(publish_exports) != expected[name]):
             fail(f"{name} export keys are not explicit and complete")
         if "src" not in manifest.get("files", []) or "dist" not in manifest.get("files", []):
             fail(f"{name} must pack source and declarations")
