@@ -2,9 +2,10 @@
 
 This receipt covers UNTEAM-010 in the separate unteam worktree at
 `codex/unteam-client`, based on source revision
-`f63eca6da106792d69c59377c3c8d91ea3ff851c`. The exact source commit
-for this slice is recorded after the local commit; the artifact checks below
-were run against the worktree diff, not a published release.
+`f63eca6da106792d69c59377c3c8d91ea3ff851c`. The verified source slice
+was committed locally as `cf795d68dbe0c2091ad62c52cf50cad376e06675`.
+The artifact checks below ran against that source tree before the commit; no
+published release is claimed.
 
 `@unteam/client@0.1.0` shares scenario/readiness wire Schemas with
 `@unteam/emulator-core@0.2.0`. Its runtime imports neither the Bun host nor
