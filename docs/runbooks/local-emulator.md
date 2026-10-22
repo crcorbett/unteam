@@ -24,7 +24,7 @@ Prepare a JSON file matching the encoded `ServerScenarioV1` shape, then run:
 
 The CLI rejects a missing file, malformed JSON, unknown `scenarioVersion`,
 excess properties, invalid service paths, and invalid bounds before acquiring a
-listener. The port must be from 1 to 65535 and must be free. Keep the scenario file owner-readable only because it contains the
+listener. The port must be from 0 to 65535; zero selects a free port, and an explicit port must be free. Keep the scenario file owner-readable only because it contains the
 synthetic Connector client secret.
 
 Read exactly one newline-delimited `unteam.ready.v2` record from stdout, or
@@ -95,3 +95,29 @@ old runs deliberately through the filesystem. No browser viewer is implemented.
 If the required recorder fails, the CLI stops the listener and reports
 `recording-failed`. Resolve the directory/disk failure before starting a new run.
 Do not treat an incomplete final JSON line as an acknowledged event.
+
+## Publish a GitHub release locally
+
+Use a clean checkout at the exact reviewed source revision. The release tag
+follows the CLI version (`v0.2.0` for CLI 0.2.0); core/Bun and client package
+versions remain independent. No GitHub Actions publication job is involved.
+
+Put pinned Bun 1.4.3 first on PATH, install with `--frozen-lockfile` and run
+`bun run verification`. That builds the ad-hoc-signed macOS executable and proves
+the three package tarballs in `artifacts/`. Package the tested executable for
+its actual host as `unteam-0.2.0-darwin-arm64.tar.gz`, including the licence and
+README. Include `apps/cli/test/fixtures/scenario.json` as
+`unteam-example.scenario.json`, clearly labelled as fictional local test data.
+Generate `SHA256SUMS` over the compressed executable, example and three tarballs.
+
+Smoke-test the extracted executable with the example: decode readiness, request
+`/ready`, stop the process and verify its retained event file. Publish those
+assets with `gh release create`, targeting the exact checked commit and using
+release notes that state the OS/CPU, signature, Effect version, package versions
+and synthetic-only claim ceiling. Do not imply npm publication, notarisation,
+other-platform execution or Microsoft compatibility.
+
+Read back the published tag/commit and download every asset into a fresh
+directory. Verify SHA-256 checksums against the uploaded checksum file, then run
+the downloaded executable smoke test again. Keep the normal checkout clean;
+release artifacts and pulled-down copies stay outside tracked source.

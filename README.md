@@ -2,6 +2,19 @@
 
 `unteam` is an unofficial, local-only, synthetic Microsoft Teams/Bot Connector emulator for strict Effect tests. It models a bounded multi-tenant Bot Connector protocol surface without contacting Microsoft services.
 
+## GitHub release
+
+The [v0.2.0 release](https://github.com/crcorbett/unteam/releases/tag/v0.2.0)
+provides a locally built macOS Apple Silicon executable, an example synthetic
+scenario, SHA-256 checksums and the three package tarballs. The executable is
+ad-hoc signed, not notarised. No other operating-system binary is qualified by
+this release. npm publication remains separate.
+
+Extract the executable, then run `./unteam --scenario
+./unteam-example.scenario.json --port 4311`. The example contains fictional test
+identities and signing keys; never use its credentials outside local simulation.
+See the local emulator runbook for release and verification steps.
+
 ## Install
 
 ```sh
