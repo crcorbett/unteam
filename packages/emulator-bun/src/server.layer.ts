@@ -1,5 +1,5 @@
 import { Context, Effect, Layer, Schema } from "effect";
-import { FetchHttpClient, HttpServerResponse } from "effect/unstable/http";
+import { FetchHttpClient, HttpServerResponse } from "effect/http";
 import * as BunHttpServer from "@effect/platform-bun/BunHttpServer";
 
 import {
@@ -41,7 +41,10 @@ const buildTeamsEmulator = (origin: URL, scenario: Scenario) =>
 const serveTeamsEmulator = (server: ScopedBunHttpServer, origin: URL, scenario: Scenario) =>
   Effect.gen(function* () {
     const { emulator, router } = yield* buildTeamsEmulator(origin, scenario);
-    yield* server.serve(router.asHttpEffect());
+    // Effect 4.0.5 gives its native router an unknown error channel. This
+    // HTTP host converts it to a defect; process tests cover request failure and cleanup.
+    // oxlint-disable-next-line effecttsgo/any-unknown-in-error-context
+    yield* server.serve(router.asHttpEffect().pipe(Effect.orDie));
     return { origin, emulator } satisfies TeamsEmulatorServer;
   });
 
@@ -73,13 +76,20 @@ const serveReadyTeamsEmulator = (server: ScopedBunHttpServer, origin: URL, scena
       "/ready",
       HttpServerResponse.schemaJson(UnteamReadyV2)(readiness).pipe(Effect.orDie),
     );
-    yield* server.serve(router.asHttpEffect());
+    // Effect 4.0.5 gives its native router an unknown error channel. This
+    // HTTP host converts it to a defect; process tests cover request failure and cleanup.
+    // oxlint-disable-next-line effecttsgo/any-unknown-in-error-context
+    yield* server.serve(router.asHttpEffect().pipe(Effect.orDie));
     return { origin, emulator, readiness } satisfies ReadyTeamsEmulatorServer;
   });
 
 const acquireLoopbackServer = (port: number) =>
   Effect.gen(function* () {
-    const server = yield* BunHttpServer.make({ hostname: "127.0.0.1", port });
+    const server = yield* BunHttpServer.make({
+      hostname: "127.0.0.1",
+      port,
+      gracefulShutdownTimeout: "1 second",
+    });
     if (!("port" in server.address)) {
       return yield* new EmulatorStartupError({ code: "unsupported-profile" });
     }

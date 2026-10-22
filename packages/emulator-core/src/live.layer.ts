@@ -1,6 +1,7 @@
+import { TrafficEvents } from "./events";
 import { Clock, Duration, Effect, Layer, Ref } from "effect";
 import { TestClock } from "effect/testing";
-import { HttpClient } from "effect/unstable/http";
+import { HttpClient } from "effect/http";
 
 import { ActivitySigningError, EmulatorStartupError } from "./errors";
 import {
@@ -75,7 +76,8 @@ export const makeTeamsEmulatorLiveLayer = (
       const state = yield* ProtocolState;
       const signer = yield* ActivitySigner;
       const client = yield* HttpClient.HttpClient;
-      return makeTeamsEmulatorService(origin, state, signer, client);
+      const events = yield* TrafficEvents;
+      return makeTeamsEmulatorService(origin, state, signer, client, events);
     }),
   ).pipe(Layer.provide(Layer.merge(protocolLayer, signerLayer)));
   return Layer.merge(protocolLayer, serviceLayer);

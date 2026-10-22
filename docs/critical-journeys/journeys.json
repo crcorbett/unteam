@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-20",
+  "updated": "2026-10-22",
   "journeys": [
     {
       "id": "CJ-001",
@@ -71,6 +71,30 @@
         "the standalone-process test executes the compiled artifact rather than calling the server Layer in-process",
         "an external consumer can be configured with only the loopback origin and GET /ready"
       ]
+    },
+    {
+      "id": "CJ-003",
+      "name": "retained traffic and required recorder failure",
+      "steps": [
+        "start the CLI with a retained run directory and port zero",
+        "send protocol requests and signed messages",
+        "reset and keep earlier event records",
+        "stop the listener, append shutdown and close the file"
+      ],
+      "oracle": {
+        "must": [
+          "confirmed records have one run ID and contiguous sequence numbers",
+          "slow readers catch up from committed file bytes",
+          "reset retains earlier records",
+          "a required recorder failure stops the listening run",
+          "the event file omits headers, bearer values, client secrets and private keys"
+        ],
+        "must_not": [
+          "silently drop events when terminal output is slow",
+          "delete log files on reset or shutdown",
+          "acknowledge an operation after its required write failed"
+        ]
+      }
     }
   ]
 }

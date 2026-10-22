@@ -13,6 +13,197 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
-    "types": ["bun"]
+    "types": ["bun"],
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "diagnostics": false,
+        "overrides": [
+          {
+            "include": ["**/apps/cli/src/config.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "effect/cli/CliError#InvalidValue",
+                "effect/cli/Flag#FileParse",
+                "effect/cli/Flag#Int",
+                "effect/cli/Flag#mapEffect",
+                "effect/cli/Flag#withDescription",
+                "effect/cli/Flag#withSchema"
+              ]
+            }
+          },
+          {
+            "include": ["**/apps/cli/src/main.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-bun/BunRuntime#runMain",
+                "@effect/platform-bun/BunServices#layer",
+                "effect/cli/Command#make",
+                "effect/cli/Command#run",
+                "effect/cli/Command#withDescription"
+              ]
+            }
+          },
+          {
+            "include": ["**/apps/cli/src/runtime.ts"],
+            "options": {
+              "allowedUnstableApis": ["effect/Stdio#Stdio"]
+            }
+          },
+          {
+            "include": ["**/apps/cli/test/config.test.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-bun/BunHttpServer#make",
+                "@effect/platform-bun/BunServices#layer",
+                "@effect/platform-node-shared/NodeSocket#makeNet",
+                "@effect/vitest#it",
+                "effect/http/FetchHttpClient#layer",
+                "effect/http/HttpClient#HttpClient",
+                "effect/http/HttpClientRequest#get",
+                "effect/process/ChildProcess#make"
+              ]
+            }
+          },
+          {
+            "include": ["**/apps/cli/test/runtime.test.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-bun/BunServices#layer",
+                "@effect/platform-node-shared/NodeSocket#makeNet",
+                "@effect/vitest#it",
+                "effect/FileSystem#FileSystem",
+                "effect/FileSystem#make",
+                "effect/PlatformError#systemError",
+                "effect/Stdio#Stdio",
+                "effect/Stdio#make",
+                "effect/http/FetchHttpClient#layer",
+                "effect/http/HttpClient#HttpClient"
+              ]
+            }
+          },
+          {
+            "include": ["**/packages/client/src/internal/live.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "effect/http/HttpClient#HttpClient",
+                "effect/http/HttpClientRequest#get",
+                "effect/http/HttpClientRequest#post",
+                "effect/http/HttpClientRequest#schemaBodyJson",
+                "effect/http/HttpClientResponse#HttpClientResponse",
+                "effect/http/HttpClientResponse#schemaBodyJson"
+              ]
+            }
+          },
+          {
+            "include": ["**/packages/client/src/live.layer.ts"],
+            "options": {
+              "allowedUnstableApis": ["effect/http/FetchHttpClient#layer"]
+            }
+          },
+          {
+            "include": ["**/packages/client/test/service.test.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-bun/BunHttpServer#make",
+                "@effect/vitest#it",
+                "effect/http/HttpRouter#make",
+                "effect/http/HttpServerResponse#schemaJson"
+              ]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-bun/src/server.layer.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-bun/BunHttpServer#make",
+                "effect/http/FetchHttpClient#layer",
+                "effect/http/HttpServerResponse#schemaJson"
+              ]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-bun/src/traffic-log.ts"],
+            "options": {
+              "allowedUnstableApis": ["effect/FileSystem#FileSystem", "effect/Path#Path"]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-bun/test/server.test.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-bun/BunHttpServer#make",
+                "@effect/platform-node-shared/NodeSocket#makeNet",
+                "@effect/vitest#it",
+                "effect/http/FetchHttpClient#layer",
+                "effect/http/HttpClient#HttpClient",
+                "effect/http/HttpClientRequest#bearerToken",
+                "effect/http/HttpClientRequest#bodyUrlParams",
+                "effect/http/HttpClientRequest#get",
+                "effect/http/HttpClientRequest#post",
+                "effect/http/HttpClientRequest#schemaBodyJson",
+                "effect/http/HttpClientResponse#HttpClientResponse",
+                "effect/http/HttpRouter#make",
+                "effect/http/HttpServerResponse#empty"
+              ]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-bun/test/traffic-log.test.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-bun/BunServices#layer",
+                "@effect/vitest#it",
+                "effect/FileSystem#FileSystem",
+                "effect/FileSystem#make",
+                "effect/PlatformError#systemError"
+              ]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-core/src/internal/protocol-http-app.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "effect/http/HttpRouter#make",
+                "effect/http/HttpRouter#route",
+                "effect/http/HttpServerRequest#HttpServerRequest",
+                "effect/http/HttpServerResponse#jsonUnsafe",
+                "effect/http/HttpServerResponse#setHeader",
+                "effect/http/UrlParams#toRecord"
+              ]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-core/src/live.layer.ts"],
+            "options": {
+              "allowedUnstableApis": ["effect/http/HttpClient#HttpClient"]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-core/src/service.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "effect/http/HttpClient#HttpClient",
+                "effect/http/HttpClientRequest#bodyJsonUnsafe",
+                "effect/http/HttpClientRequest#post",
+                "effect/http/HttpClientRequest#setHeaders"
+              ]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-core/test/errors.test.ts"],
+            "options": {
+              "allowedUnstableApis": ["@effect/vitest#it"]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-core/test/service.test.ts"],
+            "options": {
+              "allowedUnstableApis": ["@effect/vitest#it"]
+            }
+          }
+        ]
+      }
+    ]
   }
 }

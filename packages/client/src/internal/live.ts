@@ -1,5 +1,5 @@
 import { Config, Effect, Schema } from "effect";
-import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
+import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 
 import { UnteamClientError } from "../errors";
 import {
@@ -33,7 +33,7 @@ const connectionConfig = Config.all({
     UnteamConnectionConfig.fields.readinessTimeoutMillis,
     "UNTEAM_READINESS_TIMEOUT_MILLIS",
   ).pipe(Config.withDefault(2_000)),
-}).pipe(Config.map(UnteamConnectionConfig.make));
+}).pipe(Config.map((input) => UnteamConnectionConfig.make(input)));
 
 const requireSuccess = (
   response: HttpClientResponse.HttpClientResponse,
@@ -51,7 +51,7 @@ const responseBody = <A>(
   response: HttpClientResponse.HttpClientResponse,
   operation: UnteamClientError["operation"],
 ) =>
-  HttpClientResponse.schemaBodyJson(schema)(response).pipe(
+  HttpClientResponse.schemaBodyJson(schema, { onExcessProperty: "error" })(response).pipe(
     Effect.mapError(() => clientError(operation, "Unteam response failed decoding")),
   );
 

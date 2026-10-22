@@ -1,3 +1,5 @@
+import * as BunHttpServer from "@effect/platform-bun/BunHttpServer";
+import { HttpRouter, HttpServerResponse } from "effect/http";
 import { assert, describe, it } from "@effect/vitest";
 import { makeTeamsEmulatorServerFromPaths } from "@unteam/emulator-bun/server";
 import { exampleScenario } from "@unteam/emulator-core/fixtures";
@@ -46,6 +48,40 @@ describe("@unteam/client", () => {
       assert.isTrue(Exit.isFailure(path));
       assert.isTrue(Exit.isFailure(publicOrigin));
     }),
+  );
+
+  it.effect("rejects unexpected readiness fields received over HTTP", () =>
+    Effect.scoped(
+      Effect.gen(function* () {
+        const source = yield* makeTeamsEmulatorServerFromPaths(scenario);
+        const server = yield* BunHttpServer.make({ hostname: "127.0.0.1", port: 0 });
+        if (server.address._tag !== "InetAddressV4") return yield* Effect.die("test requires IPv4");
+        const router = yield* HttpRouter.make;
+        const ExcessReadiness = Schema.Struct({ ...UnteamReadyV2.fields, unexpected: Schema.Boolean });
+        yield* router.add(
+          "GET",
+          "/ready",
+          HttpServerResponse.schemaJson(ExcessReadiness)({
+            ...source.readiness,
+            unexpected: true,
+          }).pipe(Effect.orDie),
+        );
+        // Effect 4.0.5 gives its native router an unknown error channel. This
+        // HTTP host converts it to a defect; process tests cover request failure and cleanup.
+        // oxlint-disable-next-line effecttsgo/any-unknown-in-error-context
+        yield* server.serve(router.asHttpEffect().pipe(Effect.orDie));
+        const error = yield* UnteamClient.pipe(
+          Effect.provide(UnteamClientLive),
+          Effect.provideService(
+            ConfigProvider.ConfigProvider,
+            provider(`http://127.0.0.1:${server.address.port}/`),
+          ),
+          Effect.flip,
+        );
+        assert.strictEqual(error.operation, "readiness");
+        assert.strictEqual(error.reason, "Unteam response failed decoding");
+      }),
+    ),
   );
 
   it.effect("uses named controls and snapshots over the standalone server boundary", () =>

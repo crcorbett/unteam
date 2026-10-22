@@ -1,5 +1,4 @@
 import { Duration, Effect, Schema } from "effect";
-import * as SchemaError from "effect/SchemaError";
 import * as SchemaIssue from "effect/SchemaIssue";
 
 const Text = Schema.Trimmed.check(Schema.isMinLength(1), Schema.isMaxLength(256));
@@ -11,33 +10,31 @@ const PositiveInt = Schema.Int.check(Schema.isGreaterThan(0));
 const boundedArray = <S extends Schema.Constraint>(item: S, maximum: number) =>
   Schema.Array(item).check(Schema.isMaxLength(maximum));
 
-const identifier = <B extends string>(brand: B) => Text.pipe(Schema.brand(brand));
-
-export const TenantId = identifier("TenantId");
+export const TenantId = Text.pipe(Schema.brand("TenantId"));
 export type TenantId = Schema.Schema.Type<typeof TenantId>;
 
-export const BotAppId = identifier("BotAppId");
+export const BotAppId = Text.pipe(Schema.brand("BotAppId"));
 export type BotAppId = Schema.Schema.Type<typeof BotAppId>;
 
-export const UserId = identifier("UserId");
+export const UserId = Text.pipe(Schema.brand("UserId"));
 export type UserId = Schema.Schema.Type<typeof UserId>;
 
-export const ConversationId = identifier("ConversationId");
+export const ConversationId = Text.pipe(Schema.brand("ConversationId"));
 export type ConversationId = Schema.Schema.Type<typeof ConversationId>;
 
-export const ActivityId = identifier("ActivityId");
+export const ActivityId = Text.pipe(Schema.brand("ActivityId"));
 export type ActivityId = Schema.Schema.Type<typeof ActivityId>;
 
-export const ConnectionId = identifier("ConnectionId");
+export const ConnectionId = Text.pipe(Schema.brand("ConnectionId"));
 export type ConnectionId = Schema.Schema.Type<typeof ConnectionId>;
 
-export const SigningKeyId = identifier("SigningKeyId");
+export const SigningKeyId = Text.pipe(Schema.brand("SigningKeyId"));
 export type SigningKeyId = Schema.Schema.Type<typeof SigningKeyId>;
 
-export const OperationId = identifier("OperationId");
+export const OperationId = Text.pipe(Schema.brand("OperationId"));
 export type OperationId = Schema.Schema.Type<typeof OperationId>;
 
-export const ObservationId = identifier("ObservationId");
+export const ObservationId = Text.pipe(Schema.brand("ObservationId"));
 export type ObservationId = Schema.Schema.Type<typeof ObservationId>;
 
 export const LoopbackUrl = Schema.URLFromString.pipe(Schema.brand("LoopbackUrl"));
@@ -180,13 +177,13 @@ export const ServerScenarioV1 = Schema.Struct({
   signingKeys: Schema.Array(SigningKeySpec).check(Schema.isMinLength(1), Schema.isMaxLength(16)),
   observationCapacity: PositiveInt.check(Schema.isLessThanOrEqualTo(128)),
   initialTimeMillis: NonNegativeInt,
-}).annotate({ parseOptions: { onExcessProperty: "error" } });
+});
 export type ServerScenarioV1 = typeof ServerScenarioV1.Type;
 
 const UnteamReadyConnectionV2 = Schema.Struct({
   connectionId: ConnectionId,
   serviceUrl: UnteamLoopbackUrl,
-}).annotate({ parseOptions: { onExcessProperty: "error" } });
+});
 
 export const UnteamReadyV2 = Schema.Struct({
   readinessVersion: Schema.Literal("unteam.ready.v2"),
@@ -201,7 +198,7 @@ export const UnteamReadyV2 = Schema.Struct({
   botAppId: BotAppId,
   connectorScope: Text,
   connections: Schema.Array(UnteamReadyConnectionV2).check(Schema.isMinLength(1), Schema.isMaxLength(64)),
-}).annotate({ parseOptions: { onExcessProperty: "error" } });
+});
 export type UnteamReadyV2 = typeof UnteamReadyV2.Type;
 
 export const ActivityDeliveryClaims = Schema.Struct({
@@ -490,12 +487,12 @@ export const decodeExact = <S extends Schema.Constraint>(
   schema: S,
   keys: readonly string[],
   input: unknown,
-): Effect.Effect<S["Type"], SchemaError.SchemaError, S["DecodingServices"]> => {
+): Effect.Effect<S["Type"], Schema.SchemaError, S["DecodingServices"]> => {
   if (exactObject(input)) {
     const extra = Object.keys(input).find((key) => !keys.includes(key));
     if (extra !== undefined) {
       return Effect.fail(
-        new SchemaError.SchemaError(new SchemaIssue.InvalidValue({ message: "unexpected property" })),
+        new Schema.SchemaError(new SchemaIssue.InvalidValue({ message: "unexpected property" })),
       );
     }
   }

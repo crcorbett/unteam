@@ -8,8 +8,8 @@
   acquired. Invalid startup emits no readiness record.
 - Readiness is emitted only after the listener and scenario state are ready.
   It is one bounded `unteam.ready.v2` stdout line and the identical `GET
-/ready` response. Neither is a server finalizer or a second lifecycle owner.
-- The CLI port is explicit and Schema-decoded. A consumer may connect by
+  /ready` response. Neither is a server finalizer or a second lifecycle owner.
+- The CLI port is explicit and Schema-decoded; zero requests an OS-assigned port. A consumer may connect by
   configured origin, but it never owns or finalizes the unteam process.
 - `BunHttpServer.make` is the listener boundary. Its finalizer stops the listener; no raw Bun or Node lifecycle is retained.
 - The TestClock is created in the outer emulator Layer and is read effectfully. It is never acquired inside an already-finalized inner Scope.
@@ -21,3 +21,8 @@
 - Expected provider faults remain typed responses. Defects, interruption, and listener acquisition failures are not converted into arbitrary protocol messages.
 
 The caller-owned consumer ingress listener is deliberately separate from the emulator protocol listener. The critical journey requires both listeners to finalize.
+
+The required event-file lifetime encloses the listener lifetime. Reset appends
+a marker without clearing the file. Shutdown writes its marker before the file
+closes. Recorder failure closes the listener; terminal readers are optional.
+See [traffic logs](traffic-log.md).

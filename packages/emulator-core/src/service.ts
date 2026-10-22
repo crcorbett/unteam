@@ -1,6 +1,7 @@
 import { Context, Effect, Exit, Option, Schema } from "effect";
-import { HttpClient, HttpClientRequest } from "effect/unstable/http";
+import { HttpClient, HttpClientRequest } from "effect/http";
 
+import type { TrafficEventsService } from "./events";
 import type { ActivitySignerService } from "./internal/activity-signer";
 import type { ProtocolStateService } from "./internal/protocol-state";
 import { EmulatorControlError, EmulatorDeliveryError } from "./errors";
@@ -73,6 +74,7 @@ export const makeTeamsEmulatorService = (
   state: ProtocolStateService,
   signer: ActivitySignerService,
   client: HttpClient.HttpClient | undefined,
+  events: TrafficEventsService = { record: () => Effect.void },
 ): TeamsEmulatorService => {
   const deliverActivity = (request: DeliverActivity) =>
     Effect.gen(function* () {
@@ -153,6 +155,18 @@ export const makeTeamsEmulatorService = (
           observationId,
         } satisfies DeliveryReceiptV1;
       }
+      const message = {
+        _tag: "Message",
+        botAppId: state.scenario.bot.botAppId,
+        direction: "sent",
+        connectionId: connection.value.connectionId,
+        tenantId: connection.value.tenantId,
+        userId: connection.value.userId,
+        conversationId: connection.value.conversationId,
+        activityId: Option.some(request.activityId),
+        text: request.text,
+      } as const;
+      yield* events.record({ ...message, phase: "started", status: Option.none() });
       const outbound = HttpClientRequest.post(request.ingressUrl).pipe(
         HttpClientRequest.setHeaders({
           authorization: `Bearer ${signed.token}`,
@@ -160,8 +174,17 @@ export const makeTeamsEmulatorService = (
         }),
         HttpClientRequest.bodyJsonUnsafe(encodedActivity),
       );
-      const response = yield* Effect.exit(client.execute(outbound));
+      const response = yield* Effect.exit(
+        client
+          .execute(outbound)
+          .pipe(
+            Effect.onInterrupt(() =>
+              events.record({ ...message, phase: "interrupted", status: Option.none() }),
+            ),
+          ),
+      );
       if (Exit.isFailure(response)) {
+        yield* events.record({ ...message, phase: "uncertain", status: Option.none() });
         const observationId = yield* state.recordObservation({
           kind: "delivery",
           detail: "uncertain",
@@ -180,6 +203,11 @@ export const makeTeamsEmulatorService = (
         } satisfies DeliveryReceiptV1;
       }
       const status = acceptedStatus(response.value.status);
+      yield* events.record({
+        ...message,
+        phase: status >= 200 && status < 300 ? "accepted" : "rejected",
+        status: Option.some(status),
+      });
       const result = status >= 200 && status < 300 ? "delivered" : "provider-failure";
       const detail = status >= 200 && status < 300 ? "accepted" : "uncertain";
       const observationId = yield* state.recordObservation({
@@ -226,6 +254,7 @@ export const makeTeamsEmulatorService = (
 
   const reset = (request: ResetControl) =>
     state.reset.pipe(
+      Effect.tap(() => events.record({ _tag: "Lifecycle", action: "reset", scenario: state.scenario.name })),
       Effect.map(() => controlReceipt(request.operationId, receiptKind.reset)),
       Effect.mapError(mapControlError),
     );

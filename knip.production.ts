@@ -14,7 +14,8 @@ const config: KnipConfig = {
   ],
   project: ["packages/**/src/**/*.ts", "apps/**/src/**/*.ts", "scripts/**/*.ts"],
   ignore: ["**/*.test.ts", "scripts/**", "tools/**"],
-  ignoreDependencies: ["@effect/vitest", "@types/bun", "vitest"],
+  // @effect/tsgo owns this compiler-plugin name; it is not a separate import.
+  ignoreDependencies: ["@effect/language-service", "@effect/vitest", "@types/bun", "vitest"],
 };
 
 export default config;

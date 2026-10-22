@@ -79,3 +79,19 @@ Keep dated proof receipts under `docs/proof`; record statuses, counts, versions,
 The CLI binds only `127.0.0.1`. The current evidence is local and synthetic;
 opening the listener to a LAN or remote host would require a separate security,
 authentication, TLS, lifecycle and proof design.
+
+## Event files and terminal output
+
+```sh
+UNTEAM_LOG_DIRECTORY=./saved-runs ./artifacts/unteam --scenario ./unteam.scenario.json --port 0
+```
+
+Read the actual bound address from the one stdout readiness record. Human-readable
+traffic uses stderr. Each process keeps `saved-runs/run-*/events.jsonl`, including
+message text, sender, conversation, outcomes and reset/shutdown markers. Event
+files are mode 0600. A stopped or reset server does not remove them; keep or remove
+old runs deliberately through the filesystem. No browser viewer is implemented.
+
+If the required recorder fails, the CLI stops the listener and reports
+`recording-failed`. Resolve the directory/disk failure before starting a new run.
+Do not treat an incomplete final JSON line as an acknowledged event.

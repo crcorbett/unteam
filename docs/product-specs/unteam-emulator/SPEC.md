@@ -16,7 +16,7 @@ Create a small public strict-Effect monorepo that extracts only Pollsor's synthe
 - The emulator accepts only safe loopback delivery authorities.
 - Scope owns server/clock/key lifetime; reset is effectful and deterministic.
 - The standalone CLI requires `--scenario <json-file-path>` and `--port
-<loopback-port>` flags, reads the
+  <loopback-port>` flags, reads the
   JSON through Effect CLI's file-Schema boundary, and decodes it with the
   canonical Bun-owned `ServerScenarioV1` before acquiring a listener.
 - The CLI owns one `BunRuntime.runMain` execution. Process interruption closes
@@ -116,3 +116,16 @@ No Graph, Teams UI/catalog, production durability, tenant credentials, live Micr
 ## Acceptance evidence
 
 The active tasks and dated proof receipt record the exact commands and artifacts. Pollsor remains the source/current consumer; its adapter consumes the standalone executable through the versioned JSON/readiness/HTTP boundary and preserves Pollsor's TeamsChannel ingress/egress plus tenant/inbox/agent/workflow/outbox composition boundaries. This repository does not import Pollsor state.
+
+## Accepted logging successor — 22 October 2026
+
+The standalone CLI now requires a retained, ordered event file and displays the
+same records in the terminal. Reset keeps earlier events; required recorder
+failure stops the server. Port zero supports test-driver-owned processes without
+reserving and releasing a port. JWT validity follows actual time independently
+of adjustable scenario time. The event contract, file ownership and reader
+behaviour are owned by [traffic-log architecture](../../architecture/traffic-log.md).
+
+The separate consumer test driver starts the ordinary Pollsor application with
+normal Teams settings. It owns synthetic controls, replies and process cleanup;
+unteam continues to own no Pollsor state or product services.

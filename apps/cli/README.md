@@ -10,3 +10,11 @@ owns listener cleanup. Successful startup writes one `unteam.ready.v2` JSON
 line to stdout and serves the same record from `GET /ready`; bounded
 secret-negative diagnostics use stderr. The library packages remain
 runtime-free.
+
+## Saved traffic
+
+The CLI displays traffic on stderr and keeps one `events.jsonl` file per process
+under `UNTEAM_LOG_DIRECTORY` (default `.unteam/runs`). Reset keeps the earlier
+records and adds a marker. Port `0` lets the operating system choose a free port;
+read the actual address from the normal readiness record. Required file failures
+stop the server. See [the traffic-log design](../../docs/architecture/traffic-log.md).

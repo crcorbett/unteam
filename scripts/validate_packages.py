@@ -15,8 +15,8 @@ def fail(message: str) -> None:
 def main() -> None:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
     expected = {
-        "@unteam/emulator-core": {".", "./schemas", "./errors", "./service", "./live", "./test", "./fixtures", "./observations"},
-        "@unteam/emulator-bun": {".", "./server"},
+        "@unteam/emulator-core": {".", "./schemas", "./errors", "./service", "./live", "./test", "./fixtures", "./observations", "./events"},
+        "@unteam/emulator-bun": {".", "./server", "./traffic-log"},
         "@unteam/client": {"./schemas", "./errors", "./service", "./live", "./test"},
     }
     for package_dir in sorted((root / "packages").iterdir()):

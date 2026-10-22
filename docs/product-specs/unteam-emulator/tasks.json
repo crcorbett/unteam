@@ -1,6 +1,6 @@
 {
   "spec": "unteam-emulator",
-  "updated": "2026-10-03",
+  "updated": "2026-10-22",
   "tasks": [
     {
       "id": "UNTEAM-001",
@@ -136,6 +136,39 @@
         "scripts/packed-artifact-proof.ts",
         "docs/architecture/http-boundary.md",
         "docs/proof/unteam-emulator/client-extraction-2026-10-03.md"
+      ]
+    },
+    {
+      "id": "UNTEAM-011",
+      "title": "Retain ordered traffic events and display independent terminal output",
+      "status": "complete",
+      "owner": "emulator-core, emulator-bun and CLI",
+      "acceptance": [
+        "Use one checked event format and acknowledged, ordered file appends.",
+        "Retain each process run and reset marker; stop the listening run on required file failure.",
+        "Read committed file ranges for terminal output without losing records for a slow reader."
+      ],
+      "evidence": [
+        "packages/emulator-core/src/events.ts",
+        "packages/emulator-bun/src/traffic-log.ts",
+        "packages/emulator-bun/test/traffic-log.test.ts",
+        "apps/cli/test/runtime.test.ts"
+      ]
+    },
+    {
+      "id": "UNTEAM-012",
+      "title": "Support a normal consumer started by an external test driver",
+      "status": "complete",
+      "owner": "CLI and activity signer",
+      "acceptance": [
+        "Bind port zero and report the actual address.",
+        "Sign authentication tokens with actual time independently of scenario controls.",
+        "Preserve protocol authentication and verify scoped process cleanup."
+      ],
+      "evidence": [
+        "apps/cli/src/runtime.ts",
+        "packages/emulator-core/src/internal/activity-signer.ts",
+        "apps/cli/test/config.test.ts"
       ]
     }
   ]

@@ -1,6 +1,8 @@
 import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
+  // @effect/tsgo owns this compiler-plugin name; it is not a separate import.
+  ignoreDependencies: ["@effect/language-service"],
   entry: [
     "packages/emulator-core/src/index.ts",
     "packages/emulator-bun/src/index.ts",

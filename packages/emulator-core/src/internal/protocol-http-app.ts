@@ -1,5 +1,5 @@
-import { Effect, Option, Schema } from "effect";
-import { HttpRouter, HttpServerRequest, HttpServerResponse, UrlParams } from "effect/unstable/http";
+import { Effect, Option, Ref, Schema } from "effect";
+import { HttpRouter, HttpServerRequest, HttpServerResponse, UrlParams } from "effect/http";
 
 import {
   EmulatorControlError,
@@ -8,6 +8,7 @@ import {
   ProtocolErrorCode,
 } from "../errors";
 import type { TeamsEmulatorService } from "../service";
+import { TrafficEvents } from "../events";
 import {
   ActivityId,
   ConnectorSendRequest,
@@ -177,6 +178,37 @@ export const makeProtocolHttpApp = (options: {
 }) =>
   Effect.gen(function* () {
     const router = yield* HttpRouter.make;
+    const events = yield* TrafficEvents;
+    const exchanges = yield* Ref.make(0);
+    yield* router.addGlobalMiddleware((httpEffect) =>
+      Effect.gen(function* () {
+        const request = yield* HttpServerRequest.HttpServerRequest;
+        const pathname = new URL(request.originalUrl, options.origin).pathname;
+        const route =
+          pathname === "/.well-known/openidconfiguration"
+            ? "openid"
+            : pathname === "/.well-known/keys"
+              ? "keys"
+              : pathname === "/oauth2/v2.0/token"
+                ? "oauth"
+                : pathname.startsWith("/connector/")
+                  ? "connector"
+                  : pathname.startsWith("/control/")
+                    ? "control"
+                    : pathname === "/ready"
+                      ? "ready"
+                      : "unknown";
+        const exchange = `request-${yield* Ref.updateAndGet(exchanges, (current) => current + 1)}`;
+        const data = { _tag: "Http", exchange, method: request.method, route } as const;
+        yield* events.record({ ...data, phase: "received", status: Option.none() });
+        return yield* httpEffect.pipe(
+          Effect.tap((response) =>
+            events.record({ ...data, phase: "responded", status: Option.some(response.status) }),
+          ),
+          Effect.onInterrupt(() => events.record({ ...data, phase: "interrupted", status: Option.none() })),
+        );
+      }),
+    );
     const openId = HttpRouter.route("GET", "/.well-known/openidconfiguration", () =>
       schemaJson(OpenIdDocumentV1)({
         protocolVersion: "protocol.v1",
@@ -303,6 +335,19 @@ export const makeProtocolHttpApp = (options: {
           });
           return yield* controlErrorResponse("conversation-conflict", 409);
         }
+        yield* events.record({
+          _tag: "Message",
+          botAppId: options.state.scenario.bot.botAppId,
+          direction: "received",
+          phase: "started",
+          connectionId: connection.value.connectionId,
+          tenantId: connection.value.tenantId,
+          userId: connection.value.userId,
+          conversationId: connection.value.conversationId,
+          activityId: Option.none(),
+          text: decoded.value.text,
+          status: Option.none(),
+        });
         yield* options.state.recordConnectorRequest(
           ConnectorRequestV1.make({
             connectionId: connection.value.connectionId,
@@ -311,6 +356,36 @@ export const makeProtocolHttpApp = (options: {
           }),
         );
         const outcome = connection.value.connectorOutcome;
+        yield* events.record({
+          _tag: "Message",
+          botAppId: options.state.scenario.bot.botAppId,
+          direction: "received",
+          phase: outcome === "success" ? "accepted" : outcome === "timeout" ? "uncertain" : "rejected",
+          connectionId: connection.value.connectionId,
+          tenantId: connection.value.tenantId,
+          userId: connection.value.userId,
+          conversationId: connection.value.conversationId,
+          activityId: Option.none(),
+          text: decoded.value.text,
+          status:
+            outcome === "timeout"
+              ? Option.none()
+              : Option.some(
+                  outcome === "success" || outcome === "malformed-response"
+                    ? 200
+                    : outcome === "unauthorized"
+                      ? 401
+                      : outcome === "forbidden"
+                        ? 403
+                        : outcome === "not-found"
+                          ? 404
+                          : outcome === "conflict"
+                            ? 409
+                            : outcome === "throttled"
+                              ? 429
+                              : 503,
+                ),
+        });
         if (outcome === "success") {
           yield* options.state.recordObservation({
             kind: "connector-request",

@@ -9,6 +9,7 @@ Read this router first. Stable boundaries live in `docs/architecture`, repeatabl
 - [`architecture/versioning.md`](architecture/versioning.md) — independent schema and profile version policy.
 - [`architecture/lifecycle.md`](architecture/lifecycle.md) — Scope, reset, token, observation, and cleanup invariants.
 - [`architecture/http-boundary.md`](architecture/http-boundary.md) — Effect Platform client/server and serialization boundary.
+- [`architecture/traffic-log.md`](architecture/traffic-log.md) — retained event files, terminal readers and required recorder failure.
 - [`repository-harness.md`](repository-harness.md) — tooling, versions, governance, and validation profile.
 
 ## Active intent and work state

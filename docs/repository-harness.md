@@ -2,24 +2,22 @@
 
 | Item                    | Current value                                                                      |
 | ----------------------- | ---------------------------------------------------------------------------------- |
-| Package manager         | Bun `1.3.14`                                                                       |
-| Runtime                 | Bun `>=1.3.14`                                                                     |
-| Monorepo                | Bun workspaces plus Turbo `2.10.6`                                                 |
+| Package manager         | Bun `1.4.3`                                                                        |
+| Runtime                 | Bun `>=1.4.3`                                                                      |
+| Monorepo                | Bun workspaces plus Turbo `2.11.10`                                                |
 | TypeScript              | `7.0.2`, strict, exact optional properties, no unchecked indexed access            |
-| Effect                  | `4.0.0-beta.107`                                                                   |
-| Effect Platform Bun     | `4.0.0-beta.107`                                                                   |
-| Effect Vitest           | `4.0.0-beta.107`                                                                   |
-| Vitest                  | `4.1.10`                                                                           |
-| Formatter               | Oxfmt `0.60.0`                                                                     |
-| Linter                  | Oxlint `1.75.0`                                                                    |
-| Export/dead-code checks | Knip `6.29.0` plus package validator                                               |
+| Effect                  | `4.0.5`                                                                            |
+| Effect Platform Bun     | `4.0.5`                                                                            |
+| Effect Vitest           | `4.0.5`                                                                            |
+| Vitest                  | `5.0.5`                                                                            |
+| Formatter               | Oxfmt `0.74.0`                                                                     |
+| Linter                  | Oxlint `1.89.0`                                                                    |
+| Export/dead-code checks | Knip `6.42.1` plus package validator                                               |
 | License                 | Apache-2.0; selected for a permissive public library without Microsoft affiliation |
 
-The lockfile and this snapshot are checked together. The standalone-process
-slice aligns unteam with Pollsor's exact installed Effect beta.107 family. The
-installed beta.107 sources and types are authoritative for CLI, runtime,
-Schema, Bun server, and child-process behavior; newer release-candidate or
-current-main guidance does not override them.
+The lockfile and this snapshot were refreshed on 2026-10-22. Both unteam
+and Pollsor use Effect 4.0.5. Installed release sources and types own API
+compatibility; the older npm beta tag does not select the installed version.
 
 The validation sequence is intentionally serial because build outputs and packed artifacts are shared evidence:
 
@@ -30,10 +28,19 @@ bun run verification
 
 `verification` covers formatting, lint, typechecking, Knip, package tests, build, export/package checks, documentation/governance checks, and packed-artifact proof.
 
-The packed consumer uses the repository's existing `skipLibCheck` policy. The
-published Effect beta.107 package has an internal declaration mismatch:
-`Schema.d.ts` refers to `SchemaAST.Sentinel`, while the published
-`SchemaAST.d.ts` omits that source-exported type. The consumer check still uses
-the unteam declaration surfaces to typecheck its source, then exercises both
-default and source-condition runtime imports. It does not claim that Effect's
-own published declaration files pass a fresh library-internal check.
+The packed consumer retains the repository's `skipLibCheck` policy. It checks
+unteam's public declarations against consumer code and exercises both default
+and source-condition runtime imports. It does not check every dependency's
+internal declarations.
+
+## Effect checker setup
+
+The root `prepare` runs `effect-tsgo patch --oxlint` after installation. Checker
+0.56.0 supports the selected TypeScript 7.0.2, Oxlint 1.89.0 and
+oxlint-tsgolint 7.0.2004 together. Normal lint refreshes the public lint package,
+patches again, then runs native Effect correctness as errors with type-aware
+checking and warning failures. Existing rules remain active; portable checks
+also cover the new event, recorder and CLI runtime owners. Exact unstable APIs
+from pinned Effect 4.0.5 are approved only in their current files in
+`tsconfig.json`. The native router's unknown error channel is converted at the
+HTTP host; its narrow documented diagnostic exception stays at that call.

@@ -33,5 +33,5 @@ export type UnteamOrigin = typeof UnteamOrigin.Type;
 export const UnteamConnectionConfig = Schema.Struct({
   origin: UnteamOrigin,
   readinessTimeoutMillis: Schema.Int.check(Schema.isGreaterThan(0), Schema.isLessThanOrEqualTo(60_000)),
-}).annotate({ parseOptions: { onExcessProperty: "error" } });
+});
 export type UnteamConnectionConfig = typeof UnteamConnectionConfig.Type;

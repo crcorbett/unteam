@@ -53,9 +53,9 @@ const assertExports = (manifest: Record<string, unknown>, expected: readonly str
   }
 };
 
-const coreTarball = pack(join(root, "packages/emulator-core"), "unteam-emulator-core-0.1.0.tgz");
-const bunTarball = pack(join(root, "packages/emulator-bun"), "unteam-emulator-bun-0.1.0.tgz");
-const clientTarball = pack(join(root, "packages/client"), "unteam-client-0.1.0.tgz");
+const coreTarball = pack(join(root, "packages/emulator-core"), "unteam-emulator-core-0.3.0.tgz");
+const bunTarball = pack(join(root, "packages/emulator-bun"), "unteam-emulator-bun-0.3.0.tgz");
+const clientTarball = pack(join(root, "packages/client"), "unteam-client-0.2.0.tgz");
 const coreEntries = listTarball(coreTarball);
 const bunEntries = listTarball(bunTarball);
 const clientEntries = listTarball(clientTarball);
@@ -65,10 +65,10 @@ const clientManifest = readTarPackage(clientTarball);
 
 assertExports(
   coreManifest,
-  [".", "./errors", "./fixtures", "./live", "./observations", "./schemas", "./service", "./test"],
+  [".", "./events", "./errors", "./fixtures", "./live", "./observations", "./schemas", "./service", "./test"],
   "core",
 );
-assertExports(bunManifest, [".", "./server"], "bun");
+assertExports(bunManifest, [".", "./server", "./traffic-log"], "bun");
 assertExports(clientManifest, ["./schemas", "./errors", "./service", "./live", "./test"], "client");
 assertIncludes(
   coreEntries,
@@ -124,15 +124,15 @@ try {
         private: true,
         type: "module",
         dependencies: {
-          "@effect/platform-bun": "4.0.0-beta.107",
+          "@effect/platform-bun": "4.0.5",
           "@unteam/emulator-bun": `file:${bunTarball}`,
           "@unteam/client": `file:${clientTarball}`,
           "@unteam/emulator-core": `file:${coreTarball}`,
-          effect: "4.0.0-beta.107",
+          effect: "4.0.5",
         },
         overrides: {
           "@unteam/emulator-core": `file:${coreTarball}`,
-          "@effect/platform-node-shared": "4.0.0-beta.107",
+          "@effect/platform-node-shared": "4.0.5",
         },
         devDependencies: { typescript: "7.0.2" },
       },
@@ -147,11 +147,14 @@ import { makeTeamsEmulatorServer } from "@unteam/emulator-bun";
 import { makeTeamsEmulatorServer as serverEntry } from "@unteam/emulator-bun/server";
 import { exampleScenario } from "@unteam/emulator-core/fixtures";
 import { ObservationV1 } from "@unteam/emulator-core/observations";
+import { TrafficEvent } from "@unteam/emulator-core/events";
+import { TrafficLog, TrafficLogLive } from "@unteam/emulator-bun/traffic-log";
 import { TeamsEmulator } from "@unteam/emulator-core/service";
 import { ScenarioV1 } from "@unteam/emulator-core/schemas";
 import { UnteamClient } from "@unteam/client/service";
 import { UnteamClientLive } from "@unteam/client/live";
 import { UnteamReadyV2 } from "@unteam/client/schemas";
+void TrafficEvent; void TrafficLog; void TrafficLogLive;
 void makeTeamsEmulatorServer; void serverEntry; void exampleScenario; void ObservationV1; void TeamsEmulator; void ScenarioV1; void UnteamClient; void UnteamClientLive; void UnteamReadyV2;
 const program = Effect.scoped(Effect.gen(function* () { const server = yield* makeTeamsEmulatorServer(); return server.origin.href; }));
 await Effect.runPromise(program);

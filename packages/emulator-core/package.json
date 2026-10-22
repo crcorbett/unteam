@@ -1,6 +1,6 @@
 {
   "name": "@unteam/emulator-core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Strict Effect synthetic multi-tenant Bot Connector emulator core",
   "license": "Apache-2.0",
   "files": [
@@ -51,6 +51,11 @@
       "@unteam/source": "./src/observations.ts",
       "types": "./dist/observations.d.ts",
       "default": "./dist/observations.js"
+    },
+    "./events": {
+      "@unteam/source": "./src/events.ts",
+      "types": "./dist/events.d.ts",
+      "default": "./dist/events.js"
     }
   },
   "publishConfig": {
@@ -94,6 +99,11 @@
         "@unteam/source": "./src/observations.ts",
         "types": "./dist/observations.d.ts",
         "default": "./dist/observations.js"
+      },
+      "./events": {
+        "@unteam/source": "./src/events.ts",
+        "types": "./dist/events.d.ts",
+        "default": "./dist/events.js"
       }
     },
     "access": "public"

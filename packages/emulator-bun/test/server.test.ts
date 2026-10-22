@@ -1,7 +1,7 @@
 import * as BunSocket from "@effect/platform-bun/BunSocket";
 import * as BunHttpServer from "@effect/platform-bun/BunHttpServer";
 import { assert, describe, it } from "@effect/vitest";
-import { Deferred, Effect, Exit, Fiber, Redacted, Schema } from "effect";
+import { Deferred, Effect, Exit, Redacted, Schema } from "effect";
 import {
   FetchHttpClient,
   HttpClient,
@@ -9,7 +9,7 @@ import {
   HttpClientResponse,
   HttpRouter,
   HttpServerResponse,
-} from "effect/unstable/http";
+} from "effect/http";
 
 import { makeTeamsEmulatorServer, makeTeamsEmulatorServerFromPaths } from "../src/server.layer";
 import { ServerPort, ServerScenarioV1, UnteamReadyV2 } from "../src/server.schemas";
@@ -64,18 +64,13 @@ const freshTcpProbe = (url: URL) =>
   Effect.scoped(
     Effect.gen(function* () {
       const socket = yield* BunSocket.makeNet({ host: url.hostname, port: Number(url.port) });
-      const opened = yield* Deferred.make<void>();
-      const fiber = yield* socket
-        .run(() => undefined, { onOpen: Deferred.succeed(opened, undefined) })
-        .pipe(Effect.forkChild);
-      yield* Effect.raceFirst(Deferred.await(opened), Fiber.join(fiber));
-      yield* Fiber.interrupt(fiber);
+      yield* socket.reader;
     }),
   );
 
 const makeIngressServer = Effect.gen(function* () {
   const server = yield* BunHttpServer.make({ hostname: "127.0.0.1", port: 0 });
-  if (server.address._tag !== "TcpAddress") return yield* Effect.die("test ingress requires TCP");
+  if (server.address._tag !== "InetAddressV4") return yield* Effect.die("test ingress requires TCP");
   const origin = new URL(`http://127.0.0.1:${server.address.port}`);
   const received = yield* Deferred.make<{
     readonly authorization: string | undefined;
@@ -92,7 +87,10 @@ const makeIngressServer = Effect.gen(function* () {
       return HttpServerResponse.empty({ status: 202 });
     }).pipe(Effect.orDie),
   );
-  yield* server.serve(router.asHttpEffect());
+  // Effect 4.0.5 gives its native router an unknown error channel. This
+  // HTTP host converts it to a defect; process tests cover request failure and cleanup.
+  // oxlint-disable-next-line effecttsgo/any-unknown-in-error-context
+  yield* server.serve(router.asHttpEffect().pipe(Effect.orDie));
   return { origin, url: new URL("/ingress", origin), received };
 });
 
@@ -332,7 +330,7 @@ describe("@unteam/emulator-bun server", () => {
         const port = yield* Effect.scoped(
           Effect.gen(function* () {
             const reservation = yield* BunHttpServer.make({ hostname: "127.0.0.1", port: 0 });
-            if (reservation.address._tag !== "TcpAddress") {
+            if (reservation.address._tag !== "InetAddressV4") {
               return yield* Effect.die("fixed-port test requires TCP");
             }
             return ServerPort.make(reservation.address.port);

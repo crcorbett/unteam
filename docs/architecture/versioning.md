@@ -17,4 +17,8 @@ Exact excess-property policy applies to scenario/control/protocol request envelo
 
 Public package versions are independent of envelope versions. A breaking package API or schema change requires a package major/version decision; a compatible envelope addition may be released without changing unrelated envelope markers.
 
-`@unteam/emulator-core` and `@unteam/emulator-bun` remain at `0.2.0`. `@unteam/client` starts at `0.1.0` and requires the matching local core artifact for its shared wire Schemas. The shared loopback URL brand retains its original Bun-host identifier so existing source consumers do not get an unnecessary brand change. No registry publication is implied by these local versions.
+`@unteam/emulator-core` and `@unteam/emulator-bun` use local version `0.3.0`;
+`@unteam/client` and the CLI use `0.2.0`. These pre-1.0 minor changes mark the
+move from Effect beta.107 to stable 4.0.5, whose public types and imports differ.
+Wire envelope versions remain unchanged. The client requires the matching core
+artifact for shared Schemas. No registry publication is implied.

@@ -1,4 +1,4 @@
-import { Context, DateTime, Effect, HashMap, Layer, Schema } from "effect";
+import { Clock, Context, DateTime, Effect, HashMap, Layer, Schema } from "effect";
 
 import { ActivitySigningError } from "../errors";
 import {
@@ -140,7 +140,7 @@ const makeSigner = (keys: readonly KeyRecord[]) => {
         if (record._tag === "None") {
           return yield* new ActivitySigningError({ code: "key-unavailable" });
         }
-        const nowSeconds = Math.floor(input.nowMillis / 1_000);
+        const nowSeconds = Math.floor((yield* Clock.currentTimeMillis) / 1_000);
         const header = yield* Schema.encodeUnknownEffect(JwtHeader)({ alg: "RS256", kid: input.keyId }).pipe(
           Effect.mapError(() => new ActivitySigningError({ code: "claims-encoding-failure" })),
         );

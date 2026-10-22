@@ -46,8 +46,8 @@ def main() -> None:
             fail(f"missing required file {relative}")
 
     package = json.loads((root / "package.json").read_text())
-    if package.get("packageManager") != "bun@1.3.14":
-        fail("packageManager must remain bun@1.3.14")
+    if package.get("packageManager") != "bun@1.4.3":
+        fail("packageManager must remain bun@1.4.3")
     if package.get("workspaces", {}).get("packages") != ["apps/*", "packages/*"]:
         fail("workspace topology changed")
 

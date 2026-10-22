@@ -9,3 +9,5 @@ artifacts/unteam
 proof/receipts/*.local.json
 *.log
 .DS_Store
+
+.unteam/

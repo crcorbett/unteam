@@ -1,6 +1,9 @@
 import { Schema } from "effect";
 
-export class UnteamClientError extends Schema.TaggedError<UnteamClientError>()("UnteamClientError", {
+export class UnteamClientError extends Schema.TaggedError<
+  UnteamClientError,
+  { readonly brand: unique symbol }
+>()("UnteamClientError", {
   operation: Schema.Literals([
     "readiness",
     "deliver",

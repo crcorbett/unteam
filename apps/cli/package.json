@@ -1,6 +1,6 @@
 {
   "name": "unteam",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI host for the local unteam synthetic emulator",
   "license": "Apache-2.0",
   "bin": {
@@ -20,12 +20,12 @@
   "dependencies": {
     "@effect/platform-bun": "catalog:effect",
     "@unteam/emulator-bun": "workspace:*",
+    "@unteam/emulator-core": "workspace:*",
     "effect": "catalog:effect"
   },
   "devDependencies": {
     "@effect/vitest": "catalog:effect",
-    "@types/bun": "1.3.14",
-    "@unteam/emulator-core": "workspace:*",
+    "@types/bun": "1.4.3",
     "typescript": "catalog:typescript",
     "vitest": "catalog:testing"
   }

@@ -57,3 +57,11 @@ Supported: synthetic multi-tenant bot identities, users, conversations, local se
 Not claimed: Microsoft or Teams compatibility, Entra identity, Graph, Teams UI/catalog installation, proactive provider behavior, production durability, cloud deployment, credentials, exactly-once delivery, or any live tenant access. “Installation” means synthetic local address availability; no `conversationUpdate` Activity is implemented.
 
 See [`docs/README.md`](docs/README.md) for architecture, compatibility, runbooks, critical journeys, and proof receipts.
+
+## Saved traffic
+
+The CLI displays traffic on stderr and keeps one `events.jsonl` file per process
+under `UNTEAM_LOG_DIRECTORY` (default `.unteam/runs`). Reset keeps the earlier
+records and adds a marker. Port `0` lets the operating system choose a free port;
+read the actual address from the normal readiness record. Required file failures
+stop the server. See [the traffic-log design](docs/architecture/traffic-log.md).

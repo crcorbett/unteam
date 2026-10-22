@@ -4,9 +4,9 @@ import * as BunSocket from "@effect/platform-bun/BunSocket";
 import { assert, describe, it } from "@effect/vitest";
 import { ServerPort } from "@unteam/emulator-bun";
 import { EmulatorSnapshotV1 } from "@unteam/emulator-core";
-import { Deferred, Effect, Exit, Fiber, Option, Schema, Stream } from "effect";
-import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http";
-import { ChildProcess } from "effect/unstable/process";
+import { Effect, Exit, Fiber, Option, Schema, Stream } from "effect";
+import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http";
+import { ChildProcess } from "effect/process";
 
 import { UnteamDiagnosticV1, UnteamReadyV2 } from "../src/schemas";
 
@@ -16,7 +16,10 @@ const excessScenarioPath = new URL("./fixtures/scenario-excess.json", import.met
 const wrongVersionScenarioPath = new URL("./fixtures/scenario-wrong-version.json", import.meta.url).pathname;
 const malformedScenarioPath = new URL("./fixtures/scenario-malformed.txt", import.meta.url).pathname;
 const decodeReadiness = Schema.decodeUnknownEffect(Schema.fromJsonString(UnteamReadyV2));
-const decodeDiagnostic = Schema.decodeUnknownEffect(Schema.fromJsonString(UnteamDiagnosticV1));
+const decodeDiagnostic = (output: string) =>
+  Schema.decodeUnknownEffect(Schema.fromJsonString(UnteamDiagnosticV1))(
+    output.split("\n").find((line) => line.startsWith("{")) ?? "",
+  );
 
 const cliCommand = (arguments_: ReadonlyArray<string>) =>
   ChildProcess.make(cliExecutablePath, arguments_, {
@@ -31,14 +34,14 @@ const command = (scenarioPath: string, port: ServerPort) =>
 const allocateLoopbackPort = Effect.scoped(
   Effect.gen(function* () {
     const server = yield* BunHttpServer.make({ hostname: "127.0.0.1", port: 0 });
-    if (server.address._tag !== "TcpAddress") {
+    if (server.address._tag !== "InetAddressV4") {
       return yield* Effect.die("CLI test requires a TCP port");
     }
     return ServerPort.make(server.address.port);
   }),
 );
 
-const firstLine = (stream: Stream.Stream<Uint8Array, unknown>) =>
+const firstLine = <E>(stream: Stream.Stream<Uint8Array, E>) =>
   stream.pipe(
     Stream.decodeText(),
     Stream.splitLines,
@@ -56,12 +59,7 @@ const freshTcpProbe = (url: URL) =>
   Effect.scoped(
     Effect.gen(function* () {
       const socket = yield* BunSocket.makeNet({ host: url.hostname, port: Number(url.port) });
-      const opened = yield* Deferred.make<void>();
-      const fiber = yield* socket
-        .run(() => undefined, { onOpen: Deferred.succeed(opened, undefined) })
-        .pipe(Effect.forkChild);
-      yield* Effect.raceFirst(Deferred.await(opened), Fiber.join(fiber));
-      yield* Fiber.interrupt(fiber);
+      yield* socket.reader;
     }),
   );
 
@@ -93,7 +91,9 @@ const runOneProcess = (touchJwk: boolean, port: ServerPort) =>
       yield* handle.kill({ killSignal: "SIGTERM", forceKillAfter: "2 seconds" });
       yield* handle.exitCode.pipe(Effect.timeout("5 seconds"));
       const stderr = yield* Fiber.join(stderrFiber);
-      const diagnostic = yield* decodeDiagnostic(stderr.trim());
+      const diagnostic = yield* decodeDiagnostic(
+        stderr.split("\n").find((line) => line.startsWith("{")) ?? "",
+      );
       const afterClose = yield* freshTcpProbe(readiness.origin).pipe(Effect.exit);
 
       assert.strictEqual(readiness.readinessVersion, "unteam.ready.v2");
@@ -182,7 +182,7 @@ describe("unteam standalone CLI", () => {
       Effect.gen(function* () {
         const invalidArguments = [
           ["--scenario", validScenarioPath],
-          ["--scenario", validScenarioPath, "--port", "0"],
+          ["--scenario", validScenarioPath, "--port", "-1"],
           ["--scenario", validScenarioPath, "--port", "65536"],
         ];
         const invalid = yield* Effect.forEach(invalidArguments, (arguments_) =>
@@ -214,7 +214,7 @@ describe("unteam standalone CLI", () => {
         }
 
         const occupied = yield* BunHttpServer.make({ hostname: "127.0.0.1", port: 0 });
-        if (occupied.address._tag !== "TcpAddress") {
+        if (occupied.address._tag !== "InetAddressV4") {
           return yield* Effect.die("CLI occupied-port test requires TCP");
         }
         const handle = yield* command(validScenarioPath, ServerPort.make(occupied.address.port));
