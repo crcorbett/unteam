@@ -168,6 +168,7 @@
                 "effect/http/HttpRouter#route",
                 "effect/http/HttpServerRequest#HttpServerRequest",
                 "effect/http/HttpServerResponse#jsonUnsafe",
+                "effect/http/HttpServerResponse#schemaJson",
                 "effect/http/HttpServerResponse#setHeader",
                 "effect/http/UrlParams#toRecord"
               ]
@@ -200,6 +201,30 @@
             "include": ["**/packages/emulator-core/test/service.test.ts"],
             "options": {
               "allowedUnstableApis": ["@effect/vitest#it"]
+            }
+          },
+          {
+            "include": ["**/packages/emulator-core/src/internal/emulator.layer.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "effect/http/HttpClient#HttpClient",
+                "effect/http/HttpClientRequest#bodyJsonUnsafe",
+                "effect/http/HttpClientRequest#post",
+                "effect/http/HttpClientRequest#setHeaders"
+              ]
+            }
+          },
+          {
+            "include": ["**/scripts/packed-artifact-proof.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-bun/BunRuntime#runMain",
+                "@effect/platform-bun/BunServices#layer",
+                "effect/FileSystem#FileSystem",
+                "effect/Path#Path",
+                "effect/Stdio#Stdio",
+                "effect/process/ChildProcess#make"
+              ]
             }
           }
         ]

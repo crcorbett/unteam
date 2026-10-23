@@ -99,13 +99,13 @@ Do not treat an incomplete final JSON line as an acknowledged event.
 ## Publish a GitHub release locally
 
 Use a clean checkout at the exact reviewed source revision. The release tag
-follows the CLI version (`v0.2.0` for CLI 0.2.0); core/Bun and client package
+follows the CLI version (`v0.3.0` for CLI 0.3.0); core/Bun and client package
 versions remain independent. No GitHub Actions publication job is involved.
 
 Put pinned Bun 1.4.3 first on PATH, install with `--frozen-lockfile` and run
 `bun run verification`. That builds the ad-hoc-signed macOS executable and proves
 the three package tarballs in `artifacts/`. Package the tested executable for
-its actual host as `unteam-0.2.0-darwin-arm64.tar.gz`, including the licence and
+its actual host as `unteam-0.3.0-darwin-arm64.tar.gz`, including the licence and
 README. Include `apps/cli/test/fixtures/scenario.json` as
 `unteam-example.scenario.json`, clearly labelled as fictional local test data.
 Generate `SHA256SUMS` over the compressed executable, example and three tarballs.

@@ -8,8 +8,10 @@ inbox, agent, workflow or outbox.
 Use `@unteam/client/live` at a test or development application boundary after
 setting `UNTEAM_ORIGIN` to the server's loopback root URL. The optional
 `UNTEAM_READINESS_TIMEOUT_MILLIS` bounds the startup check. The service contract
-is `@unteam/client/service`; `@unteam/client/test` supplies the same named
-service for deterministic substitution. `@unteam/client/schemas` exposes the
+is `@unteam/client/service`; `@unteam/client/test` exports the same named
+service for deterministic substitution with `Layer.succeed(UnteamClient,
+implementation)`. Tests supply the named methods directly; no generic client
+callback or Layer factory is required. `@unteam/client/schemas` exposes the
 versioned wire values owned by `@unteam/emulator-core/schemas` and the client
 connection configuration. There is no raw HTTP-client export.
 

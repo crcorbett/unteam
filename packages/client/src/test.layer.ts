@@ -1,6 +1,2 @@
-import { Layer } from "effect";
-
-import type { IUnteamClient } from "./service";
-import { UnteamClient } from "./service";
-
-export const makeUnteamClientTest = (client: IUnteamClient) => Layer.succeed(UnteamClient, client);
+// Tests provide a checked implementation with native Layer.succeed(UnteamClient, implementation).
+export { UnteamClient } from "./service";

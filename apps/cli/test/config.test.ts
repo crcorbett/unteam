@@ -1,3 +1,5 @@
+import { Function as EffectFunction, Array as EffectArray } from "effect";
+import { Predicate } from "effect";
 import { BunServices } from "@effect/platform-bun";
 import * as BunHttpServer from "@effect/platform-bun/BunHttpServer";
 import * as BunSocket from "@effect/platform-bun/BunSocket";
@@ -7,9 +9,7 @@ import { EmulatorSnapshotV1 } from "@unteam/emulator-core";
 import { Effect, Exit, Fiber, Option, Schema, Stream } from "effect";
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http";
 import { ChildProcess } from "effect/process";
-
 import { UnteamDiagnosticV1, UnteamReadyV2 } from "../src/schemas";
-
 const cliExecutablePath = new URL("../../../artifacts/unteam", import.meta.url).pathname;
 const validScenarioPath = new URL("./fixtures/scenario.json", import.meta.url).pathname;
 const excessScenarioPath = new URL("./fixtures/scenario-excess.json", import.meta.url).pathname;
@@ -18,29 +18,32 @@ const malformedScenarioPath = new URL("./fixtures/scenario-malformed.txt", impor
 const decodeReadiness = Schema.decodeUnknownEffect(Schema.fromJsonString(UnteamReadyV2));
 const decodeDiagnostic = (output: string) =>
   Schema.decodeUnknownEffect(Schema.fromJsonString(UnteamDiagnosticV1))(
-    output.split("\n").find((line) => line.startsWith("{")) ?? "",
+    EffectFunction.pipe(
+      output.split("\n"),
+      EffectArray.findFirst((line) => line.startsWith("{")),
+      Option.getOrElse(() => ""),
+    ),
   );
-
 const cliCommand = (arguments_: ReadonlyArray<string>) =>
   ChildProcess.make(cliExecutablePath, arguments_, {
     stdout: "pipe",
     stderr: "pipe",
     forceKillAfter: "2 seconds",
   });
-
 const command = (scenarioPath: string, port: ServerPort) =>
   cliCommand(["--scenario", scenarioPath, "--port", String(port)]);
-
 const allocateLoopbackPort = Effect.scoped(
   Effect.gen(function* () {
-    const server = yield* BunHttpServer.make({ hostname: "127.0.0.1", port: 0 });
-    if (server.address._tag !== "InetAddressV4") {
+    const server = yield* BunHttpServer.make({
+      hostname: "127.0.0.1",
+      port: 0,
+    });
+    if (!Predicate.isTagged("InetAddressV4")(server.address)) {
       return yield* Effect.die("CLI test requires a TCP port");
     }
     return ServerPort.make(server.address.port);
   }),
 );
-
 const firstLine = <E>(stream: Stream.Stream<Uint8Array, E>) =>
   stream.pipe(
     Stream.decodeText(),
@@ -54,15 +57,16 @@ const firstLine = <E>(stream: Stream.Stream<Uint8Array, E>) =>
     ),
     Effect.timeout("5 seconds"),
   );
-
 const freshTcpProbe = (url: URL) =>
   Effect.scoped(
     Effect.gen(function* () {
-      const socket = yield* BunSocket.makeNet({ host: url.hostname, port: Number(url.port) });
+      const socket = yield* BunSocket.makeNet({
+        host: url.hostname,
+        port: Number(url.port),
+      });
       yield* socket.reader;
     }),
   );
-
 const runOneProcess = (touchJwk: boolean, port: ServerPort) =>
   Effect.scoped(
     Effect.gen(function* () {
@@ -88,14 +92,14 @@ const runOneProcess = (touchJwk: boolean, port: ServerPort) =>
         assert.strictEqual(jwkResponse.status, 200);
         yield* jwkResponse.arrayBuffer;
       }
-      yield* handle.kill({ killSignal: "SIGTERM", forceKillAfter: "2 seconds" });
+      yield* handle.kill({
+        killSignal: "SIGTERM",
+        forceKillAfter: "2 seconds",
+      });
       yield* handle.exitCode.pipe(Effect.timeout("5 seconds"));
       const stderr = yield* Fiber.join(stderrFiber);
-      const diagnostic = yield* decodeDiagnostic(
-        stderr.split("\n").find((line) => line.startsWith("{")) ?? "",
-      );
+      const diagnostic = yield* decodeDiagnostic(stderr);
       const afterClose = yield* freshTcpProbe(readiness.origin).pipe(Effect.exit);
-
       assert.strictEqual(readiness.readinessVersion, "unteam.ready.v2");
       assert.strictEqual(readiness.synthetic, true);
       assert.strictEqual(readiness.scenarioName, "cli-two-tenant-loopback");
@@ -111,10 +115,9 @@ const runOneProcess = (touchJwk: boolean, port: ServerPort) =>
       return initial;
     }),
   );
-
 describe("unteam standalone CLI", () => {
-  it.effect("renders help and rejects invalid scenarios without readiness or sensitive output", () =>
-    Effect.scoped(
+  it.effect("renders help and rejects invalid scenarios without readiness or sensitive output", () => {
+    return Effect.scoped(
       Effect.gen(function* () {
         const helpHandle = yield* cliCommand(["--help"]);
         const helpOutputFiber = yield* helpHandle.stdout.pipe(
@@ -135,58 +138,59 @@ describe("unteam standalone CLI", () => {
         assert.isTrue(helpOutput.includes("--port integer"));
         assert.isFalse(helpOutput.includes("unteam.ready.v2"));
         assert.strictEqual(helpError, "");
-
         const port = yield* allocateLoopbackPort;
         const missingPath = "/tmp/unteam-scenario-that-does-not-exist.json";
         const outcomes = yield* Effect.forEach(
           [missingPath, malformedScenarioPath, wrongVersionScenarioPath, excessScenarioPath],
-          (scenarioPath) =>
-            Effect.gen(function* () {
-              const handle = yield* command(scenarioPath, port);
-              const stdoutFiber = yield* handle.stdout.pipe(
-                Stream.decodeText(),
-                Stream.mkString,
-                Effect.forkScoped,
-              );
-              const stderrFiber = yield* handle.stderr.pipe(
-                Stream.decodeText(),
-                Stream.mkString,
-                Effect.forkScoped,
-              );
-              const exitCode = yield* handle.exitCode.pipe(Effect.timeout("5 seconds"));
-              return {
-                exitCode,
-                stdout: yield* Fiber.join(stdoutFiber),
-                stderr: yield* Fiber.join(stderrFiber),
-                scenarioPath,
-              };
-            }),
+          Effect.fnUntraced(function* (scenarioPath) {
+            const handle = yield* command(scenarioPath, port);
+            const stdoutFiber = yield* handle.stdout.pipe(
+              Stream.decodeText(),
+              Stream.mkString,
+              Effect.forkScoped,
+            );
+            const stderrFiber = yield* handle.stderr.pipe(
+              Stream.decodeText(),
+              Stream.mkString,
+              Effect.forkScoped,
+            );
+            const exitCode = yield* handle.exitCode.pipe(Effect.timeout("5 seconds"));
+            return {
+              exitCode,
+              stdout: yield* Fiber.join(stdoutFiber),
+              stderr: yield* Fiber.join(stderrFiber),
+              scenarioPath,
+            };
+          }),
         );
-
-        for (const outcome of outcomes) {
-          assert.notStrictEqual(Number(outcome.exitCode), 0);
-          assert.isFalse(outcome.stdout.includes("unteam.ready.v2"));
-          assert.isFalse(outcome.stdout.includes(outcome.scenarioPath));
-          assert.isFalse(outcome.stdout.includes("must-not-appear"));
-          const diagnostic = yield* decodeDiagnostic(outcome.stderr.trim());
-          assert.strictEqual(diagnostic.event, "startup-failed");
-          assert.isFalse(outcome.stderr.includes(outcome.scenarioPath));
-          assert.isFalse(outcome.stderr.includes("must-not-appear"));
-        }
+        yield* Effect.forEach(
+          outcomes,
+          Effect.fnUntraced(function* (outcome) {
+            assert.notStrictEqual(Number(outcome.exitCode), 0);
+            assert.isFalse(outcome.stdout.includes("unteam.ready.v2"));
+            assert.isFalse(outcome.stdout.includes(outcome.scenarioPath));
+            assert.isFalse(outcome.stdout.includes("must-not-appear"));
+            const _input = outcome.stderr.trim();
+            const diagnostic = yield* decodeDiagnostic(_input);
+            assert.strictEqual(diagnostic.event, "startup-failed");
+            assert.isFalse(outcome.stderr.includes(outcome.scenarioPath));
+            assert.isFalse(outcome.stderr.includes("must-not-appear"));
+          }),
+        );
       }),
-    ).pipe(Effect.provide(BunServices.layer)),
-  );
-
-  it.effect("requires a valid unused loopback port", () =>
-    Effect.scoped(
+    ).pipe(Effect.provide(BunServices.layer));
+  });
+  it.effect("requires a valid unused loopback port", () => {
+    return Effect.scoped(
       Effect.gen(function* () {
         const invalidArguments = [
           ["--scenario", validScenarioPath],
           ["--scenario", validScenarioPath, "--port", "-1"],
           ["--scenario", validScenarioPath, "--port", "65536"],
         ];
-        const invalid = yield* Effect.forEach(invalidArguments, (arguments_) =>
-          Effect.gen(function* () {
+        const invalid = yield* Effect.forEach(
+          invalidArguments,
+          Effect.fnUntraced(function* (arguments_) {
             const handle = yield* cliCommand(arguments_);
             const stdoutFiber = yield* handle.stdout.pipe(
               Stream.decodeText(),
@@ -206,18 +210,25 @@ describe("unteam standalone CLI", () => {
             };
           }),
         );
-        for (const outcome of invalid) {
-          assert.notStrictEqual(Number(outcome.exitCode), 0);
-          assert.isFalse(outcome.stdout.includes("unteam.ready.v2"));
-          assert.isFalse(outcome.stdout.includes("synthetic-cli-secret"));
-          assert.strictEqual((yield* decodeDiagnostic(outcome.stderr.trim())).event, "startup-failed");
-        }
-
-        const occupied = yield* BunHttpServer.make({ hostname: "127.0.0.1", port: 0 });
-        if (occupied.address._tag !== "InetAddressV4") {
+        yield* Effect.forEach(
+          invalid,
+          Effect.fnUntraced(function* (outcome) {
+            assert.notStrictEqual(Number(outcome.exitCode), 0);
+            assert.isFalse(outcome.stdout.includes("unteam.ready.v2"));
+            assert.isFalse(outcome.stdout.includes("synthetic-cli-secret"));
+            const _input2 = outcome.stderr.trim();
+            assert.strictEqual((yield* decodeDiagnostic(_input2)).event, "startup-failed");
+          }),
+        );
+        const occupied = yield* BunHttpServer.make({
+          hostname: "127.0.0.1",
+          port: 0,
+        });
+        if (!Predicate.isTagged("InetAddressV4")(occupied.address)) {
           return yield* Effect.die("CLI occupied-port test requires TCP");
         }
-        const handle = yield* command(validScenarioPath, ServerPort.make(occupied.address.port));
+        const _input3 = ServerPort.make(occupied.address.port);
+        const handle = yield* command(validScenarioPath, _input3);
         const stdoutFiber = yield* handle.stdout.pipe(
           Stream.decodeText(),
           Stream.mkString,
@@ -231,20 +242,16 @@ describe("unteam standalone CLI", () => {
         const exitCode = yield* handle.exitCode.pipe(Effect.timeout("5 seconds"));
         assert.notStrictEqual(Number(exitCode), 0);
         assert.strictEqual(yield* Fiber.join(stdoutFiber), "");
-        assert.strictEqual(
-          (yield* decodeDiagnostic((yield* Fiber.join(stderrFiber)).trim())).event,
-          "startup-failed",
-        );
+        const _input4 = (yield* Fiber.join(stderrFiber)).trim();
+        assert.strictEqual((yield* decodeDiagnostic(_input4)).event, "startup-failed");
       }),
-    ).pipe(Effect.provide(BunServices.layer)),
-  );
-
+    ).pipe(Effect.provide(BunServices.layer));
+  });
   it.effect("emits bounded readiness, serves HTTP, finalizes on SIGTERM, and starts fresh", () =>
     Effect.gen(function* () {
       const port = yield* allocateLoopbackPort;
       const first = yield* runOneProcess(true, port);
       const second = yield* runOneProcess(false, port);
-
       assert.strictEqual(first.snapshotVersion, "snapshot.v1");
       assert.strictEqual(second.protocol.jwkRequestCount, 0);
       assert.strictEqual(second.activeTokenCount, 0);
@@ -252,9 +259,9 @@ describe("unteam standalone CLI", () => {
       assert.deepEqual(second.connectorRequests, []);
     }).pipe(Effect.provide(BunServices.layer), Effect.provide(FetchHttpClient.layer)),
   );
-
-  it.effect("rejects non-loopback and wrong-version readiness values", () =>
-    Effect.gen(function* () {
+  it.effect(
+    "rejects non-loopback and wrong-version readiness values",
+    Effect.fnUntraced(function* () {
       const base = {
         readinessVersion: "unteam.ready.v2",
         synthetic: true,
@@ -267,7 +274,12 @@ describe("unteam standalone CLI", () => {
         controlBaseUrl: "http://127.0.0.1:1234/control/",
         botAppId: "bot-a",
         connectorScope: "scope-a",
-        connections: [{ connectionId: "connection-a", serviceUrl: "http://127.0.0.1:1234/connector/a/" }],
+        connections: [
+          {
+            connectionId: "connection-a",
+            serviceUrl: "http://127.0.0.1:1234/connector/a/",
+          },
+        ],
       };
       const wrongVersion = yield* Schema.decodeUnknownEffect(UnteamReadyV2)({
         ...base,
@@ -277,7 +289,6 @@ describe("unteam standalone CLI", () => {
         ...base,
         origin: "https://example.invalid/",
       }).pipe(Effect.exit);
-
       assert.isTrue(Exit.isFailure(wrongVersion));
       assert.isTrue(Exit.isFailure(publicOrigin));
     }),

@@ -1,3 +1,6 @@
+import type { TrafficEventData } from "@unteam/emulator-core/events";
+import { Data } from "effect";
+import { Function as EffectFunction, Array as EffectArray } from "effect";
 import { BunServices } from "@effect/platform-bun";
 import { assert, describe, it } from "@effect/vitest";
 import {
@@ -15,27 +18,26 @@ import {
   Stream,
 } from "effect";
 import { TrafficEvent, TrafficRunId } from "@unteam/emulator-core/events";
-
 import { TrafficLog, TrafficLogLive, formatTrafficEvent } from "../src/traffic-log";
-
 describe("required traffic recorder", () => {
-  it.effect("quotes terminal control characters in checked event fields", () =>
-    Effect.sync(() => {
-      const rendered = formatTrafficEvent(
-        TrafficEvent.make({
-          eventVersion: "unteam.event.v1",
-          runId: TrafficRunId.make("terminal-test"),
-          sequence: 1,
-          timestamp: DateTime.makeUnsafe("2026-10-22T00:00:00Z"),
-          data: { _tag: "Lifecycle", action: "started", scenario: "fixture\u001b[2J\ninjected" },
+  it.effect("quotes terminal control characters in checked event fields", () => {
+    return Effect.sync(() => {
+      const _input = TrafficEvent.make({
+        eventVersion: "unteam.event.v1",
+        runId: TrafficRunId.make("terminal-test"),
+        sequence: 1,
+        timestamp: DateTime.makeUnsafe("2026-10-22T00:00:00Z"),
+        data: Data.taggedEnum<TrafficEventData>().Lifecycle({
+          action: "started",
+          scenario: "fixture\u001b[2J\ninjected",
         }),
-      );
+      });
+      const rendered = formatTrafficEvent(_input);
       assert.isFalse(rendered.includes("\u001b"));
       assert.isFalse(rendered.includes("\n"));
       assert.include(rendered, "\\u001b[2J\\ninjected");
-    }),
-  );
-
+    });
+  });
   it.live("retains concurrent ordered records and catches up a slow reader from the file", () =>
     Effect.scoped(
       Effect.gen(function* () {
@@ -44,7 +46,11 @@ describe("required traffic recorder", () => {
         const services = yield* Layer.build(
           TrafficLogLive.pipe(
             Layer.provide(
-              ConfigProvider.layer(ConfigProvider.fromUnknown({ UNTEAM_LOG_DIRECTORY: directory })),
+              ConfigProvider.layer(
+                ConfigProvider.fromUnknown({
+                  UNTEAM_LOG_DIRECTORY: directory,
+                }),
+              ),
             ),
           ),
         );
@@ -52,39 +58,64 @@ describe("required traffic recorder", () => {
         const first = yield* Deferred.make<void>();
         const resume = yield* Deferred.make<void>();
         const reader = yield* log.follow.pipe(
-          Stream.tap((event) =>
-            event.sequence === 1
-              ? Deferred.succeed(first, undefined).pipe(Effect.andThen(Deferred.await(resume)))
-              : Effect.void,
-          ),
+          Stream.tap((event) => {
+            if (event.sequence === 1)
+              return Deferred.succeed(first, undefined).pipe(Effect.andThen(Deferred.await(resume)));
+            return Effect.void;
+          }),
           Stream.take(102),
           Stream.runCollect,
           Effect.forkChild,
         );
-        yield* log.events.record({ _tag: "Lifecycle", action: "started", scenario: "recorder-test" });
+        yield* log.events.record(
+          Data.taggedEnum<TrafficEventData>().Lifecycle({
+            action: "started",
+            scenario: "recorder-test",
+          }),
+        );
         yield* Deferred.await(first);
         yield* Effect.forEach(
-          Array.from({ length: 100 }, (_, index) => index),
-          () => log.events.record({ _tag: "Lifecycle", action: "reset", scenario: "recorder-test" }),
-          { concurrency: 16 },
+          EffectArray.makeBy(100, (index) => index),
+          () =>
+            log.events.record(
+              Data.taggedEnum<TrafficEventData>().Lifecycle({
+                action: "reset",
+                scenario: "recorder-test",
+              }),
+            ),
+          {
+            concurrency: 16,
+          },
         );
-        yield* log.events.record({ _tag: "Lifecycle", action: "stopped", scenario: "recorder-test" });
+        yield* log.events.record(
+          Data.taggedEnum<TrafficEventData>().Lifecycle({
+            action: "stopped",
+            scenario: "recorder-test",
+          }),
+        );
         yield* Deferred.succeed(resume, undefined);
         const read = yield* Fiber.join(reader);
         assert.deepEqual(
-          read.map((event) => event.sequence),
-          Array.from({ length: 102 }, (_, index) => index + 1),
+          EffectFunction.pipe(
+            read,
+            EffectArray.map((event) => event.sequence),
+          ),
+          EffectArray.makeBy(102, (index) => index + 1),
         );
         const source = yield* fs.readFileString(log.filePath);
         const saved = yield* Effect.forEach(source.trim().split("\n"), (line) =>
           Schema.decodeUnknownEffect(Schema.fromJsonString(TrafficEvent))(line),
         );
         assert.deepEqual(saved, read);
-        assert.isTrue(saved.every((event) => event.runId === log.runId));
+        assert.isTrue(
+          EffectFunction.pipe(
+            saved,
+            EffectArray.every((event) => event.runId === log.runId),
+          ),
+        );
       }),
     ).pipe(Effect.provide(BunServices.layer)),
   );
-
   it.live("signals a required write failure and interrupts the unrecorded operation", () =>
     Effect.scoped(
       Effect.gen(function* () {
@@ -106,6 +137,8 @@ describe("required traffic recorder", () => {
                 writeAll: () =>
                   Effect.fail(
                     PlatformError.systemError({
+                      // PlatformError.systemError requires its reason tag in this native constructor.
+                      // oxlint-disable-next-line effect/no-manual-tag
                       _tag: "PermissionDenied",
                       module: "FileSystem",
                       method: "writeAll",
@@ -117,7 +150,11 @@ describe("required traffic recorder", () => {
         const services = yield* Layer.build(
           TrafficLogLive.pipe(
             Layer.provide(
-              ConfigProvider.layer(ConfigProvider.fromUnknown({ UNTEAM_LOG_DIRECTORY: directory })),
+              ConfigProvider.layer(
+                ConfigProvider.fromUnknown({
+                  UNTEAM_LOG_DIRECTORY: directory,
+                }),
+              ),
             ),
             Layer.provide(Layer.succeed(FileSystem.FileSystem, failingFs)),
           ),
@@ -125,13 +162,23 @@ describe("required traffic recorder", () => {
         const log = Context.get(services, TrafficLog);
         const failure = yield* log.failure.pipe(Effect.flip, Effect.forkChild);
         const operation = yield* log.events
-          .record({ _tag: "Lifecycle", action: "started", scenario: "failing-recorder" })
+          .record(
+            Data.taggedEnum<TrafficEventData>().Lifecycle({
+              action: "started",
+              scenario: "failing-recorder",
+            }),
+          )
           .pipe(Effect.exit, Effect.forkChild);
         const error = yield* Fiber.join(failure);
         const outcome = yield* Fiber.await(operation);
         assert.isTrue(Exit.isFailure(outcome) || Exit.isFailure(outcome.value));
         const later = yield* log.events
-          .record({ _tag: "Lifecycle", action: "reset", scenario: "failing-recorder" })
+          .record(
+            Data.taggedEnum<TrafficEventData>().Lifecycle({
+              action: "reset",
+              scenario: "failing-recorder",
+            }),
+          )
           .pipe(Effect.forkChild);
         assert.isTrue(Exit.isFailure(yield* Fiber.await(later)));
         assert.strictEqual(error.operation, "write");

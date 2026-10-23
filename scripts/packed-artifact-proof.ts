@@ -1,147 +1,171 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { BunServices } from "@effect/platform-bun";
+import * as BunRuntime from "@effect/platform-bun/BunRuntime";
+import { Array, Effect, Equal, FileSystem, Function, HashSet, Path, Schema, Stdio, Stream } from "effect";
+import { ChildProcess } from "effect/process";
 
-const root = resolve(import.meta.dir, "..");
-const artifacts = join(root, "artifacts");
-
-const run = (command: readonly string[], cwd: string): string => {
-  const result = Bun.spawnSync({ cmd: [...command], cwd, stdout: "pipe", stderr: "pipe" });
-  const stdout = new TextDecoder().decode(result.stdout);
-  const stderr = new TextDecoder().decode(result.stderr);
-  if (result.exitCode !== 0) throw new Error(`${command.join(" ")} failed: ${stderr || stdout}`);
-  return stdout;
-};
-
-const pack = (packageDirectory: string, filename: string) => {
-  mkdirSync(artifacts, { recursive: true });
-  const output = run(["bun", "pm", "pack", "--destination", artifacts, "--quiet"], packageDirectory).trim();
-  const generated = output.length > 0 ? output.split("\n").at(-1) : undefined;
-  return generated === undefined ? join(artifacts, filename) : resolve(generated);
-};
-
-const listTarball = (tarball: string): readonly string[] =>
-  run(["tar", "-tzf", tarball], root)
-    .trim()
-    .split("\n")
-    .filter((entry) => entry.length > 0);
-
-const readTarPackage = (tarball: string): Record<string, unknown> =>
-  JSON.parse(run(["tar", "-xOzf", tarball, "package/package.json"], root)) as Record<string, unknown>;
-
-const assertIncludes = (entries: readonly string[], required: readonly string[], label: string) => {
-  for (const path of required) {
-    if (!entries.includes(`package/${path}`)) throw new Error(`${label} is missing package/${path}`);
-  }
-};
-
-const assertExports = (manifest: Record<string, unknown>, expected: readonly string[], label: string) => {
-  const exports = manifest.exports;
-  if (typeof exports !== "object" || exports === null) throw new Error(`${label} has no packed exports`);
-  const keys = Object.keys(exports).sort();
-  if (JSON.stringify(keys) !== JSON.stringify([...expected].sort())) {
-    throw new Error(`${label} packed export keys do not match: ${keys.join(",")}`);
-  }
-  for (const key of expected) {
-    const descriptor = (exports as Record<string, unknown>)[key];
-    if (typeof descriptor !== "object" || descriptor === null)
-      throw new Error(`${label}${key} is not conditional`);
-    const conditions = descriptor as Record<string, unknown>;
-    for (const condition of ["@unteam/source", "types", "default"]) {
-      if (typeof conditions[condition] !== "string") throw new Error(`${label}${key} lacks ${condition}`);
-    }
-  }
-};
-
-const coreTarball = pack(join(root, "packages/emulator-core"), "unteam-emulator-core-0.3.0.tgz");
-const bunTarball = pack(join(root, "packages/emulator-bun"), "unteam-emulator-bun-0.3.0.tgz");
-const clientTarball = pack(join(root, "packages/client"), "unteam-client-0.2.0.tgz");
-const coreEntries = listTarball(coreTarball);
-const bunEntries = listTarball(bunTarball);
-const clientEntries = listTarball(clientTarball);
-const coreManifest = readTarPackage(coreTarball);
-const bunManifest = readTarPackage(bunTarball);
-const clientManifest = readTarPackage(clientTarball);
-
-assertExports(
-  coreManifest,
-  [".", "./events", "./errors", "./fixtures", "./live", "./observations", "./schemas", "./service", "./test"],
-  "core",
-);
-assertExports(bunManifest, [".", "./server", "./traffic-log"], "bun");
-assertExports(clientManifest, ["./schemas", "./errors", "./service", "./live", "./test"], "client");
-assertIncludes(
-  coreEntries,
-  [
-    "dist/index.js",
-    "dist/index.d.ts",
-    "src/index.ts",
-    "dist/schemas.js",
-    "dist/schemas.d.ts",
-    "src/schemas.ts",
-    "dist/test.layer.js",
-    "dist/test.layer.d.ts",
-    "src/test.layer.ts",
-    "dist/fixtures.js",
-    "dist/observations.js",
-  ],
-  "core",
-);
-assertIncludes(
-  bunEntries,
-  [
-    "dist/index.js",
-    "dist/index.d.ts",
-    "src/index.ts",
-    "dist/server.layer.js",
-    "dist/server.layer.d.ts",
-    "src/server.layer.ts",
-  ],
-  "bun",
-);
-assertIncludes(
-  clientEntries,
-  [
-    "dist/schemas.js",
-    "dist/schemas.d.ts",
-    "dist/service.js",
-    "dist/service.d.ts",
-    "dist/live.layer.js",
-    "dist/live.layer.d.ts",
-    "dist/test.layer.js",
-    "dist/test.layer.d.ts",
-  ],
-  "client",
-);
-
-const consumer = mkdtempSync(join(tmpdir(), "unteam-packed-consumer-"));
-try {
-  writeFileSync(
-    join(consumer, "package.json"),
-    JSON.stringify(
-      {
-        name: "unteam-packed-consumer",
-        private: true,
-        type: "module",
-        dependencies: {
-          "@effect/platform-bun": "4.0.5",
-          "@unteam/emulator-bun": `file:${bunTarball}`,
-          "@unteam/client": `file:${clientTarball}`,
-          "@unteam/emulator-core": `file:${coreTarball}`,
-          effect: "4.0.5",
-        },
-        overrides: {
-          "@unteam/emulator-core": `file:${coreTarball}`,
-          "@effect/platform-node-shared": "4.0.5",
-        },
-        devDependencies: { typescript: "7.0.2" },
-      },
-      null,
-      2,
-    ),
+class PackedProofError extends Schema.TaggedError<PackedProofError, { readonly brand: unique symbol }>()(
+  "PackedProofError",
+  { reason: Schema.String },
+) {}
+const run = Effect.fnUntraced(function* (input: {
+  readonly executable: string;
+  readonly args: readonly string[];
+  readonly cwd: string;
+}) {
+  const child = yield* ChildProcess.make(input.executable, input.args, {
+    cwd: input.cwd,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [stdout, stderr, code] = yield* Effect.all(
+    [
+      child.stdout.pipe(Stream.decodeText(), Stream.mkString),
+      child.stderr.pipe(Stream.decodeText(), Stream.mkString),
+      child.exitCode,
+    ],
+    { concurrency: "unbounded" },
   );
-  writeFileSync(
-    join(consumer, "consumer.ts"),
+  if (Number(code) !== 0)
+    return yield* new PackedProofError({ reason: `${input.executable} failed: ${stderr || stdout}` });
+  return stdout;
+});
+const PackedManifest = Schema.Struct({
+  exports: Schema.Record(
+    Schema.String,
+    Schema.Struct({ "@unteam/source": Schema.String, types: Schema.String, default: Schema.String }),
+  ),
+});
+const ConsumerManifest = Schema.Struct({
+  name: Schema.String,
+  private: Schema.Boolean,
+  type: Schema.Literal("module"),
+  dependencies: Schema.Record(Schema.String, Schema.String),
+  overrides: Schema.Record(Schema.String, Schema.String),
+  devDependencies: Schema.Record(Schema.String, Schema.String),
+});
+const Proof = Schema.Struct({
+  proofVersion: Schema.Literal("packed-artifact.v1"),
+  packages: Schema.Array(Schema.String),
+  checks: Schema.Array(Schema.String),
+});
+
+const verifyArchive = Effect.fnUntraced(function* (input: {
+  readonly root: string;
+  readonly directory: string;
+  readonly exports: readonly string[];
+  readonly files: readonly string[];
+}) {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const artifacts = path.join(input.root, "artifacts");
+  yield* fs.makeDirectory(artifacts, { recursive: true });
+  const output = yield* run({
+    executable: "bun",
+    args: ["pm", "pack", "--destination", artifacts, "--quiet"],
+    cwd: path.join(input.root, input.directory),
+  });
+  const generated = yield* Function.pipe(
+    output.trim().split("\n"),
+    Array.last,
+    Effect.fromOption(() => new PackedProofError({ reason: "Pack did not return an archive path" })),
+  );
+  const archive = path.resolve(input.root, input.directory, generated);
+  const listing = yield* run({ executable: "tar", args: ["-tzf", archive], cwd: input.root });
+  const entries = HashSet.fromIterable(listing.trim().split("\n"));
+  yield* Effect.forEach(input.files, (file) => {
+    if (HashSet.has(entries, `package/${file}`)) return Effect.void;
+    return Effect.fail(new PackedProofError({ reason: `${input.directory} is missing ${file}` }));
+  });
+  const manifestText = yield* run({
+    executable: "tar",
+    args: ["-xOzf", archive, "package/package.json"],
+    cwd: input.root,
+  });
+  const manifest = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(PackedManifest))(manifestText);
+  if (!Equal.equals(HashSet.fromIterable(Object.keys(manifest.exports)), HashSet.fromIterable(input.exports)))
+    return yield* new PackedProofError({ reason: `${input.directory} packed exports differ` });
+  return archive;
+});
+
+const program = Effect.gen(function* () {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const stdio = yield* Stdio.Stdio;
+  const root = yield* path.fromFileUrl(new URL("../", import.meta.url));
+  const coreTarball = yield* verifyArchive({
+    root,
+    directory: "packages/emulator-core",
+    exports: [
+      ".",
+      "./events",
+      "./errors",
+      "./fixtures",
+      "./live",
+      "./observations",
+      "./schemas",
+      "./service",
+      "./test",
+    ],
+    files: [
+      "dist/index.js",
+      "dist/index.d.ts",
+      "src/index.ts",
+      "dist/schemas.js",
+      "dist/schemas.d.ts",
+      "src/schemas.ts",
+      "dist/test.layer.js",
+      "dist/test.layer.d.ts",
+      "src/test.layer.ts",
+      "dist/fixtures.js",
+      "dist/observations.js",
+    ],
+  });
+  const bunTarball = yield* verifyArchive({
+    root,
+    directory: "packages/emulator-bun",
+    exports: [".", "./server", "./traffic-log"],
+    files: [
+      "dist/index.js",
+      "dist/index.d.ts",
+      "src/index.ts",
+      "dist/server.layer.js",
+      "dist/server.layer.d.ts",
+      "src/server.layer.ts",
+    ],
+  });
+  const clientTarball = yield* verifyArchive({
+    root,
+    directory: "packages/client",
+    exports: ["./schemas", "./errors", "./service", "./live", "./test"],
+    files: [
+      "dist/schemas.js",
+      "dist/schemas.d.ts",
+      "dist/service.js",
+      "dist/service.d.ts",
+      "dist/live.layer.js",
+      "dist/live.layer.d.ts",
+      "dist/test.layer.js",
+      "dist/test.layer.d.ts",
+    ],
+  });
+  const consumer = yield* fs.makeTempDirectoryScoped({ prefix: "unteam-packed-consumer-" });
+  const manifest = yield* Schema.encodeEffect(Schema.fromJsonString(ConsumerManifest))({
+    name: "unteam-packed-consumer",
+    private: true,
+    type: "module",
+    dependencies: {
+      "@effect/platform-bun": "4.0.5",
+      "@unteam/emulator-bun": `file:${bunTarball}`,
+      "@unteam/client": `file:${clientTarball}`,
+      "@unteam/emulator-core": `file:${coreTarball}`,
+      effect: "4.0.5",
+    },
+    overrides: { "@unteam/emulator-core": `file:${coreTarball}`, "@effect/platform-node-shared": "4.0.5" },
+    devDependencies: { typescript: "7.0.2" },
+  });
+  yield* fs.writeFileString(path.join(consumer, "package.json"), manifest);
+  yield* fs.writeFileString(
+    path.join(consumer, "consumer.ts"),
     `import { Effect, Schema } from "effect";
 import { makeTeamsEmulatorServer } from "@unteam/emulator-bun";
 import { makeTeamsEmulatorServer as serverEntry } from "@unteam/emulator-bun/server";
@@ -160,10 +184,10 @@ const program = Effect.scoped(Effect.gen(function* () { const server = yield* ma
 await Effect.runPromise(program);
 `,
   );
-  run(["bun", "install", "--no-progress"], consumer);
-  run(
-    [
-      "bun",
+  yield* run({ executable: "bun", args: ["install", "--no-progress"], cwd: consumer });
+  yield* run({
+    executable: "bun",
+    args: [
       "x",
       "tsc",
       "--noEmit",
@@ -178,27 +202,25 @@ await Effect.runPromise(program);
       "--skipLibCheck",
       "consumer.ts",
     ],
-    consumer,
-  );
-  run(["bun", "consumer.ts"], consumer);
-  run(
-    [
-      "bun",
+    cwd: consumer,
+  });
+  yield* run({ executable: "bun", args: ["consumer.ts"], cwd: consumer });
+  yield* run({
+    executable: "bun",
+    args: [
       "--conditions",
       "@unteam/source",
       "-e",
       "import('@unteam/emulator-core/schemas').then(() => import('@unteam/emulator-bun/server')).then(() => import('@unteam/client/live'))",
     ],
-    consumer,
-  );
-} finally {
-  rmSync(consumer, { recursive: true, force: true });
-}
-
-process.stdout.write(
-  JSON.stringify({
+    cwd: consumer,
+  });
+  const receipt = yield* Schema.encodeEffect(Schema.fromJsonString(Proof))({
     proofVersion: "packed-artifact.v1",
-    packages: [coreTarball, bunTarball, clientTarball].map((path) => path.replace(`${root}/`, "")),
+    packages: Function.pipe(
+      [coreTarball, bunTarball, clientTarball],
+      Array.map((archive) => path.relative(root, archive)),
+    ),
     checks: [
       "tarball-files",
       "conditional-exports",
@@ -206,5 +228,7 @@ process.stdout.write(
       "runtime-imports",
       "@unteam/source-condition",
     ],
-  }) + "\n",
-);
+  });
+  yield* Stream.make(`${receipt}\n`).pipe(Stream.run(stdio.stdout()));
+});
+BunRuntime.runMain(program.pipe(Effect.scoped, Effect.provide(BunServices.layer)));

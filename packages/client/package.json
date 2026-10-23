@@ -1,6 +1,6 @@
 {
   "name": "@unteam/client",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Typed Effect HTTP client for the local unteam emulator",
   "license": "Apache-2.0",
   "files": [

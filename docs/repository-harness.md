@@ -44,3 +44,22 @@ also cover the new event, recorder and CLI runtime owners. Exact unstable APIs
 from pinned Effect 4.0.5 are approved only in their current files in
 `tsconfig.json`. The native router's unknown error channel is converted at the
 HTTP host; its narrow documented diagnostic exception stays at that call.
+
+The root configuration extends Commonplace's complete `strict` preset
+(`@commonplaces/oxlint-plugin` 0.6.1 at the 2026-10-23 review), alongside native
+Effect correctness checks. It covers application code, packages, scripts and
+tests. Generated build output and packed artifacts are ignored; tests and tools
+have no blanket exemption. The optional `style` preset is separate.
+
+Only the exact Web Crypto signing adapter allows Promise conversion, because
+Web Crypto exposes Promise-only methods. It still rejects async functions and
+Promise chains. Static Layers receive checked configuration through named
+services; filesystem, process, HTTP and state operations use native Effect APIs.
+Exact inline exceptions document host-required tags, checked terminal encoding
+and data fields that resemble operation names. These do not disable a whole file.
+
+Packed package manifests are decoded through Schema before their exports are
+checked. JWT JSON output uses Schema encoding. The generic `decodeExact`
+ingress decoder retains one documented parameter-level exception: it must
+accept raw input so its supplied schema can validate it. This does not exempt
+other functions or files from the shared rules.

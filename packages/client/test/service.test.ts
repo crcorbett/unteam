@@ -1,3 +1,6 @@
+import { Option } from "effect";
+import { Predicate } from "effect";
+import { Function as EffectFunction, Array as EffectArray } from "effect";
 import * as BunHttpServer from "@effect/platform-bun/BunHttpServer";
 import { HttpRouter, HttpServerResponse } from "effect/http";
 import { assert, describe, it } from "@effect/vitest";
@@ -5,30 +8,32 @@ import { makeTeamsEmulatorServerFromPaths } from "@unteam/emulator-bun/server";
 import { exampleScenario } from "@unteam/emulator-core/fixtures";
 import { ServicePath } from "@unteam/emulator-core/schemas";
 import { ConfigProvider, Effect, Exit, Schema } from "effect";
-
 import { UnteamClientLive } from "../src/live.layer";
 import { ServerScenarioV1, SetInstallation, UnteamConnectionConfig, UnteamReadyV2 } from "../src/schemas";
 import { UnteamClient } from "../src/service";
-
 const scenario = ServerScenarioV1.make({
   ...exampleScenario,
-  connections: exampleScenario.connections.map((connection) => ({
-    connectionId: connection.connectionId,
-    tenantId: connection.tenantId,
-    userId: connection.userId,
-    conversationId: connection.conversationId,
-    servicePath: ServicePath.make(`/connector/${connection.connectionId}/`),
-    installation: connection.installation,
-    connectorOutcome: connection.connectorOutcome,
-    signingKeyId: connection.signingKeyId,
-  })),
+  connections: EffectFunction.pipe(
+    exampleScenario.connections,
+    EffectArray.map((connection) => ({
+      connectionId: connection.connectionId,
+      tenantId: connection.tenantId,
+      userId: connection.userId,
+      conversationId: connection.conversationId,
+      servicePath: ServicePath.make(`/connector/${connection.connectionId}/`),
+      installation: connection.installation,
+      connectorOutcome: connection.connectorOutcome,
+      signingKeyId: connection.signingKeyId,
+    })),
+  ),
 });
-
 const provider = (origin: string) =>
   ConfigProvider.fromEnv({
-    env: { UNTEAM_ORIGIN: origin, UNTEAM_READINESS_TIMEOUT_MILLIS: "2000" },
+    env: {
+      UNTEAM_ORIGIN: origin,
+      UNTEAM_READINESS_TIMEOUT_MILLIS: "2000",
+    },
   });
-
 describe("@unteam/client", () => {
   it.effect("decodes exact loopback config and rejects wrong-version readiness", () =>
     Effect.gen(function* () {
@@ -49,15 +54,21 @@ describe("@unteam/client", () => {
       assert.isTrue(Exit.isFailure(publicOrigin));
     }),
   );
-
   it.effect("rejects unexpected readiness fields received over HTTP", () =>
     Effect.scoped(
       Effect.gen(function* () {
         const source = yield* makeTeamsEmulatorServerFromPaths(scenario);
-        const server = yield* BunHttpServer.make({ hostname: "127.0.0.1", port: 0 });
-        if (server.address._tag !== "InetAddressV4") return yield* Effect.die("test requires IPv4");
+        const server = yield* BunHttpServer.make({
+          hostname: "127.0.0.1",
+          port: 0,
+        });
+        if (!Predicate.isTagged("InetAddressV4")(server.address))
+          return yield* Effect.die("test requires IPv4");
         const router = yield* HttpRouter.make;
-        const ExcessReadiness = Schema.Struct({ ...UnteamReadyV2.fields, unexpected: Schema.Boolean });
+        const ExcessReadiness = Schema.Struct({
+          ...UnteamReadyV2.fields,
+          unexpected: Schema.Boolean,
+        });
         yield* router.add(
           "GET",
           "/ready",
@@ -83,7 +94,6 @@ describe("@unteam/client", () => {
       }),
     ),
   );
-
   it.effect("uses named controls and snapshots over the standalone server boundary", () =>
     Effect.scoped(
       Effect.gen(function* () {
@@ -107,17 +117,20 @@ describe("@unteam/client", () => {
           ...encodedReadiness,
           readinessVersion: "unteam.ready.v1",
         }).pipe(Effect.exit);
-
         assert.strictEqual(client.readiness.readinessVersion, "unteam.ready.v2");
-        assert.strictEqual(
-          initial.connections.find((connection) => connection.connectionId === "connection-a")?.installation,
-          "installed",
+        const initialInstallation = EffectFunction.pipe(
+          initial.connections,
+          EffectArray.findFirst((connection) => connection.connectionId === "connection-a"),
+          Option.map((connection) => connection.installation),
         );
+        assert.deepEqual(initialInstallation, Option.some("installed"));
         assert.isTrue(receipt.accepted);
-        assert.strictEqual(
-          changed.connections.find((connection) => connection.connectionId === "connection-a")?.installation,
-          "blocked",
+        const changedInstallation = EffectFunction.pipe(
+          changed.connections,
+          EffectArray.findFirst((connection) => connection.connectionId === "connection-a"),
+          Option.map((connection) => connection.installation),
         );
+        assert.deepEqual(changedInstallation, Option.some("blocked"));
         assert.isTrue(Exit.isFailure(wrongVersion));
       }),
     ),

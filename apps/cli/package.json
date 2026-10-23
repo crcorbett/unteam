@@ -1,6 +1,6 @@
 {
   "name": "unteam",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI host for the local unteam synthetic emulator",
   "license": "Apache-2.0",
   "bin": {

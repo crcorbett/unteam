@@ -8,3 +8,10 @@ Version `0.2.0` adds explicit replay delivery policy, bounded adversarial claim/
 `TrafficEvents` recording capability. The CLI supplies its required recorder;
 library-only consumers may omit recording. Core owns no file or terminal.
 JWT validity uses the actual clock independently of adjustable scenario time.
+
+`./live` exports static `TeamsEmulatorLive` and `TeamsEmulatorTest` Layers.
+Supply the decoded scenario and actual listener origin through
+`Layer.succeed(EmulatorConfiguration, { scenario, origin })`, then provide that
+Layer to the emulator Layer. `EmulatorConfiguration` is exported from `./live`.
+The test Layer owns its controlled clock and deterministic signer. Application
+hosts own execution and listener lifetime; there is no Layer factory callback.
