@@ -36,7 +36,7 @@
     "validate:governance": "python3 tools/governance/validate.py .",
     "docs:check": "python3 tools/governance/validate.py .",
     "test:packed": "bun run scripts/packed-artifact-proof.ts",
-    "verification": "bun run format:check && bun run lint && bun run check-types && bun run knip && bun run knip:production && bun run test && bun run build && bun run build:executable && bun run test:exports && bun run validate:repository && bun run validate:governance && bun run test:packed",
+    "verification": "bun run format:check && bun run build && bun run lint && bun run check-types && bun run knip && bun run knip:production && bun run test && bun run build:executable && bun run test:exports && bun run validate:repository && bun run validate:governance && bun run test:packed",
     "prepare": "effect-tsgo patch --oxlint"
   },
   "devDependencies": {

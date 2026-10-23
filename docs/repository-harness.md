@@ -19,7 +19,7 @@ The lockfile and this snapshot were refreshed on 2026-10-22. Both unteam
 and Pollsor use Effect 4.0.5. Installed release sources and types own API
 compatibility; the older npm beta tag does not select the installed version.
 
-The validation sequence is intentionally serial because build outputs and packed artifacts are shared evidence:
+The validation sequence is intentionally serial because build outputs and packed artifacts are shared evidence. Build runs before type-aware lint so a clean checkout has the public declarations needed by workspace consumers:
 
 ```sh
 bun install --frozen-lockfile
