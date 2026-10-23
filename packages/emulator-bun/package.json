@@ -1,6 +1,6 @@
 {
   "name": "@unteam/emulator-bun",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Scoped Effect Platform Bun HTTP host for the unteam emulator",
   "license": "Apache-2.0",
   "files": [

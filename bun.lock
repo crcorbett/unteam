@@ -6,6 +6,7 @@
       "name": "unteam",
       "devDependencies": {
         "@commonplaces/oxlint-plugin": "latest",
+        "@effect/platform-bun": "catalog:effect",
         "@effect/tsgo": "0.56.0",
         "@types/bun": "1.4.3",
         "effect": "catalog:effect",
@@ -19,7 +20,7 @@
     },
     "apps/cli": {
       "name": "unteam",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "bin": {
         "unteam": "dist/main.js",
       },
@@ -38,7 +39,7 @@
     },
     "packages/client": {
       "name": "@unteam/client",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@unteam/emulator-core": "workspace:*",
         "effect": "catalog:effect",
@@ -53,7 +54,7 @@
     },
     "packages/emulator-bun": {
       "name": "@unteam/emulator-bun",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@effect/platform-bun": "catalog:effect",
         "@unteam/emulator-core": "workspace:*",
@@ -68,7 +69,7 @@
     },
     "packages/emulator-core": {
       "name": "@unteam/emulator-core",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "effect": "catalog:effect",
       },

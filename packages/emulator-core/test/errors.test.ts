@@ -1,6 +1,7 @@
+import { Function as EffectFunction, Array as EffectArray } from "effect";
+import { Predicate } from "effect";
 import { assert, describe, it } from "@effect/vitest";
 import { Effect } from "effect";
-
 import {
   ActivityIngressError,
   ActivitySigningError,
@@ -14,7 +15,6 @@ import {
   StartupErrorCode,
   statusForProtocolError,
 } from "../src/errors";
-
 describe("typed error contracts", () => {
   it.effect("keeps every tagged error family closed and status-mapped", () =>
     Effect.sync(() => {
@@ -60,39 +60,68 @@ describe("typed error contracts", () => {
         "transient-failure",
         "malformed-response",
       ] as const satisfies readonly ProtocolErrorCode[];
-
-      for (const code of startupCodes) {
-        const error = new EmulatorStartupError({ code });
-        assert.strictEqual(error._tag, "EmulatorStartupError");
-        assert.strictEqual(error.code, code);
-      }
-      for (const code of controlCodes) {
-        const error = new EmulatorControlError({ code });
-        assert.strictEqual(error._tag, "EmulatorControlError");
-        assert.strictEqual(error.code, code);
-      }
-      for (const code of deliveryCodes) {
-        const error = new EmulatorDeliveryError({ code });
-        assert.strictEqual(error._tag, "EmulatorDeliveryError");
-        assert.strictEqual(error.code, code);
-      }
-      for (const code of protocolCodes) {
-        const error = new EmulatorProtocolError({ code, status: statusForProtocolError(code) });
-        assert.strictEqual(error._tag, "EmulatorProtocolError");
-        assert.strictEqual(error.code, code);
-        assert.strictEqual(error.status, statusForProtocolError(code));
-      }
-
-      for (const code of ["key-unavailable", "web-crypto-failure", "claims-encoding-failure"] as const) {
-        const error = new ActivitySigningError({ code });
-        assert.strictEqual(error._tag, "ActivitySigningError");
-        assert.strictEqual(error.code, code);
-      }
-      for (const code of ["request-failure", "response-failure", "timeout", "interrupted"] as const) {
-        const error = new ActivityIngressError({ code });
-        assert.strictEqual(error._tag, "ActivityIngressError");
-        assert.strictEqual(error.code, code);
-      }
+      EffectFunction.pipe(
+        startupCodes,
+        EffectArray.forEach((code) => {
+          const error = new EmulatorStartupError({
+            code,
+          });
+          assert.isTrue(Predicate.isTagged("EmulatorStartupError")(error));
+          assert.strictEqual(error.code, code);
+        }),
+      );
+      EffectFunction.pipe(
+        controlCodes,
+        EffectArray.forEach((code) => {
+          const error = new EmulatorControlError({
+            code,
+          });
+          assert.isTrue(Predicate.isTagged("EmulatorControlError")(error));
+          assert.strictEqual(error.code, code);
+        }),
+      );
+      EffectFunction.pipe(
+        deliveryCodes,
+        EffectArray.forEach((code) => {
+          const error = new EmulatorDeliveryError({
+            code,
+          });
+          assert.isTrue(Predicate.isTagged("EmulatorDeliveryError")(error));
+          assert.strictEqual(error.code, code);
+        }),
+      );
+      EffectFunction.pipe(
+        protocolCodes,
+        EffectArray.forEach((code) => {
+          const error = new EmulatorProtocolError({
+            code,
+            status: statusForProtocolError(code),
+          });
+          assert.isTrue(Predicate.isTagged("EmulatorProtocolError")(error));
+          assert.strictEqual(error.code, code);
+          assert.strictEqual(error.status, statusForProtocolError(code));
+        }),
+      );
+      EffectFunction.pipe(
+        ["key-unavailable", "web-crypto-failure", "claims-encoding-failure"] as const,
+        EffectArray.forEach((code) => {
+          const error = new ActivitySigningError({
+            code,
+          });
+          assert.isTrue(Predicate.isTagged("ActivitySigningError")(error));
+          assert.strictEqual(error.code, code);
+        }),
+      );
+      EffectFunction.pipe(
+        ["request-failure", "response-failure", "timeout", "interrupted"] as const,
+        EffectArray.forEach((code) => {
+          const error = new ActivityIngressError({
+            code,
+          });
+          assert.isTrue(Predicate.isTagged("ActivityIngressError")(error));
+          assert.strictEqual(error.code, code);
+        }),
+      );
     }),
   );
 });

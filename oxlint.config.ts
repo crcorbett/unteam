@@ -1,12 +1,28 @@
+import { Function as EffectFunction } from "effect";
+import { strict } from "@commonplaces/oxlint-plugin";
 import { correctness } from "@effect/tsgo/oxlint-presets";
 import { Record } from "effect";
 import { defineConfig } from "oxlint";
-
 export default defineConfig({
-  extends: [{ ...correctness, rules: Record.map(correctness.rules, (): "error" => "error") }],
+  extends: [
+    strict,
+    {
+      ...correctness,
+      rules: EffectFunction.pipe(
+        correctness.rules,
+        Record.map((): "error" => "error"),
+      ),
+    },
+  ],
   jsPlugins: ["@commonplaces/oxlint-plugin/strict-effect"],
   ignorePatterns: ["**/dist/**", "artifacts/**"],
   rules: {
+    // Web Crypto has a Promise API; this exact adapter converts each rejection.
+    // Async functions and Promise chains remain forbidden in this file.
+    "strict-effect/no-promise-workflow": [
+      "error",
+      { allowedFiles: ["packages/emulator-core/src/internal/activity-signer.ts"] },
+    ],
     "no-explicit-any": "error",
     "no-console": "error",
     "no-non-null-assertion": "error",

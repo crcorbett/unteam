@@ -1,1 +1,1 @@
-export { makeTeamsEmulatorTestLayer } from "./live.layer";
+export { TeamsEmulatorTest, EmulatorConfiguration } from "./live.layer";

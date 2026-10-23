@@ -1,6 +1,6 @@
 {
   "name": "@unteam/emulator-core",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Strict Effect synthetic multi-tenant Bot Connector emulator core",
   "license": "Apache-2.0",
   "files": [

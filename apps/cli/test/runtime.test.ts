@@ -17,16 +17,13 @@ import {
   Stream,
 } from "effect";
 import { FetchHttpClient, HttpClient } from "effect/http";
-
 import { runRuntime } from "../src/runtime";
-
 const scenarioPath = new URL("./fixtures/scenario.json", import.meta.url).pathname;
-
 describe("CLI recorder lifetime", () => {
   it.live(
     "stops the listening server when its required recorder fails after readiness",
-    () =>
-      Effect.scoped(
+    () => {
+      return Effect.scoped(
         Effect.gen(function* () {
           const fs = yield* FileSystem.FileSystem;
           const directory = yield* fs.makeTempDirectoryScoped();
@@ -49,17 +46,19 @@ describe("CLI recorder lifetime", () => {
                   write: (buffer) => file.write(buffer),
                   writeAll: (bytes) =>
                     Ref.updateAndGet(writes, (count) => count + 1).pipe(
-                      Effect.flatMap((count) =>
-                        count > 2
-                          ? Effect.fail(
-                              PlatformError.systemError({
-                                _tag: "PermissionDenied",
-                                module: "FileSystem",
-                                method: "writeAll",
-                              }),
-                            )
-                          : file.writeAll(bytes),
-                      ),
+                      Effect.flatMap((count) => {
+                        if (count > 2)
+                          return Effect.fail(
+                            PlatformError.systemError({
+                              // PlatformError.systemError requires its reason tag in this native constructor.
+                              // oxlint-disable-next-line effect/no-manual-tag
+                              _tag: "PermissionDenied",
+                              module: "FileSystem",
+                              method: "writeAll",
+                            }),
+                          );
+                        return file.writeAll(bytes);
+                      }),
                     ),
                 })),
               ),
@@ -71,7 +70,10 @@ describe("CLI recorder lifetime", () => {
             stdout: () =>
               Sink.forEach((chunk: string | Uint8Array) =>
                 Schema.decodeUnknownEffect(Schema.fromJsonString(UnteamReadyV2))(
-                  typeof chunk === "string" ? chunk.trim() : new TextDecoder().decode(chunk).trim(),
+                  (() => {
+                    if (Schema.is(Schema.String)(chunk)) return chunk.trim();
+                    return new TextDecoder().decode(chunk).trim();
+                  })(),
                 ).pipe(
                   Effect.flatMap((value) => Deferred.succeed(ready, value)),
                   Effect.asVoid,
@@ -80,13 +82,16 @@ describe("CLI recorder lifetime", () => {
               ),
             stderr: () => Sink.drain,
           });
-          const runtime = yield* runRuntime(scenario, ServerPort.make(0)).pipe(
+          const _input = ServerPort.make(0);
+          const runtime = yield* runRuntime(scenario, _input).pipe(
             Effect.scoped,
             Effect.provideService(FileSystem.FileSystem, brokenFs),
             Effect.provideService(Stdio.Stdio, stdio),
             Effect.provideService(
               ConfigProvider.ConfigProvider,
-              ConfigProvider.fromUnknown({ UNTEAM_LOG_DIRECTORY: directory }),
+              ConfigProvider.fromUnknown({
+                UNTEAM_LOG_DIRECTORY: directory,
+              }),
             ),
             Effect.exit,
             Effect.forkChild,
@@ -94,11 +99,10 @@ describe("CLI recorder lifetime", () => {
           const readiness = yield* Effect.raceFirst(
             Deferred.await(ready),
             Fiber.join(runtime).pipe(
-              Effect.flatMap((exit) =>
-                Exit.isFailure(exit)
-                  ? Effect.failCause(exit.cause)
-                  : Effect.die("Runtime exited without readiness"),
-              ),
+              Effect.flatMap((exit) => {
+                if (Exit.isFailure(exit)) return Effect.failCause(exit.cause);
+                return Effect.die("Runtime exited without readiness");
+              }),
             ),
           ).pipe(Effect.timeout("3 seconds"));
           const client = yield* HttpClient.HttpClient;
@@ -119,7 +123,8 @@ describe("CLI recorder lifetime", () => {
           assert.isTrue(Exit.isFailure(probe));
           assert.isAtLeast(yield* Ref.get(writes), 3);
         }),
-      ).pipe(Effect.provide(FetchHttpClient.layer), Effect.provide(BunServices.layer)),
+      ).pipe(Effect.provide(FetchHttpClient.layer), Effect.provide(BunServices.layer));
+    },
     15_000,
   );
 });
